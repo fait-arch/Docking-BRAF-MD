@@ -1,0 +1,26 @@
+name: md-braf
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - ambertools=26.0   # tleap, antechamber, parmchk2, MMPBSA.py (misma versión que el reporte)
+  - openmm            # motor de MD (CUDA si hay GPU NVIDIA)
+  - pdbfixer
+  - parmed
+  - mdanalysis
+  - mdtraj
+  - openbabel
+  - rdkit
+  - vina              # AutoDock Vina 1.2
+  - pdb2pqr           # protonación (PDB2PQR + PROPKA)
+  - propka
+  - matplotlib
+  - pandas
+  - numpy
+  - scipy
+# GPU NVIDIA: si `python -m openmm.testInstallation` da CUDA_ERROR_UNSUPPORTED_PTX_VERSION,
+# fijar cuda-version a la que admite el driver (la que muestra nvidia-smi), por ejemplo:
+#   micromamba install -c conda-forge "cuda-version=13.2"
+# PyMOL (solo para figuras 3D) es incompatible con ambertools 26 en el mismo entorno:
+#   micromamba create -n pymol -c conda-forge python=3.11 pymol-open-source

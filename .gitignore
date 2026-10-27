@@ -1,0 +1,24 @@
+# Resultados de las simulaciones: no se versionan, se regeneran con los scripts
+simulaciones/*/md_*/
+simulaciones/*/analisis*/
+simulaciones/*/resultados*/
+*.dcd
+*.nc
+*.chk
+corrida*.log
+nohup.out
+
+# Python
+__pycache__/
+*.pyc
+
+# Prefijos de micromamba creados por error dentro del proyecto
+simulaciones/*/y/
+
+# LaTeX (si se agrega el reporte en la raíz)
+/*.aux
+/*.fdb_latexmk
+/*.fls
+/*.out
+/*.synctex.gz
+*.swp
