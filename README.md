@@ -11,6 +11,7 @@ figuras **no** se versionan: se generan al correr los scripts (ver `.gitignore`)
 |---|---|---|
 | Macaridine | 94717379 | `simulaciones/Macaridine_94717379/` |
 | Pallidine | 24543347 | `simulaciones/Pallidine_24543347/` |
+| Pallidine protonada (NH⁺, +1) | 24543347 | `simulaciones/Pallidine_24543347_protonada/` |
 
 ## Estructura
 

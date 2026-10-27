@@ -1,0 +1,13 @@
+source leaprc.protein.ff19SB
+source leaprc.gaff
+source leaprc.water.tip3p
+loadamberparams LIG.frcmod
+LIG = loadmol2 LIG.mol2
+prot = loadpdb receptor_amber.pdb
+complex = combine {prot LIG}
+solvateOct complex TIP3PBOX 12.0
+addIonsRand complex Na+ 36 Cl- 45 5.0
+charge complex
+saveamberparm complex sistema.prmtop sistema.inpcrd
+savepdb complex sistema.pdb
+quit

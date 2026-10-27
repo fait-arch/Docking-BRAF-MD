@@ -1,0 +1,13 @@
+source leaprc.protein.ff19SB
+source leaprc.gaff
+source leaprc.water.tip3p
+loadamberparams LIG.frcmod
+LIG = loadmol2 LIG.mol2
+prot = loadpdb receptor_amber.pdb
+complex = combine {prot LIG}
+check complex
+charge complex
+savepdb complex complejo_seco.pdb
+saveamberparm complex complejo_seco.prmtop complejo_seco.inpcrd
+solvateOct complex TIP3PBOX 12.0
+quit

@@ -1,0 +1,53 @@
+
+[1] Receptor: recorte y protonación (PDB2PQR/PROPKA)
+    residuos 448-723: 2213 átomos pesados
+  $ pdb2pqr30 --ff=AMBER --ffout=AMBER --titration-state-method=propka --with-ph=7.4 --keep-chain --pdb-output /home/claude/docking-braf-md/simulaciones/Pallidine_24543347_protonada/sistema/receptor_H.pdb /home/claude/docking-braf-md/simulaciones/Pallidine_24543347_protonada/sistema/receptor_recortado.pdb /home/claude/docking-braf-md/simulaciones/Pallidine_24543347_protonada/sistema/receptor.pqr
+    estados no estándar: {'477': 'HID', '510': 'HID', '539': 'HID', '540': 'HID', '542': 'HIE', '568': 'HIE', '574': 'HID', '585': 'HID', '600': 'GLH', '608': 'HID'}
+
+[2] Ligando: perceptión de enlaces
+    SMILES: COC1=C[C@@]23CC[N@@H+](C)[C@@H](Cc4cc(O)c(OC)cc42)C3=CC1=O
+
+[4] Parámetros GAFF + AM1-BCC (antechamber)
+  $ antechamber -i ligando_pose.sdf -fi sdf -o LIG.mol2 -fo mol2 -c bcc -nc 1 -at gaff -rn LIG -pf y
+  $ parmchk2 -i LIG.mol2 -f mol2 -o LIG.frcmod -s gaff
+    distancia mínima ligando-proteína (pose final): 1.92 Å
+
+[5] tleap: ff19SB + GAFF + TIP3P, octaedro truncado, SLTCAP
+  $ tleap -f tleap_seco.in
+    carga del soluto = +9, aguas = 14918  ->  Na+ = 36, Cl- = 45
+  $ tleap -f tleap.in
+
+{
+  "protonacion": {
+    "477": "HID",
+    "510": "HID",
+    "539": "HID",
+    "540": "HID",
+    "542": "HIE",
+    "568": "HIE",
+    "574": "HID",
+    "585": "HID",
+    "600": "GLH",
+    "608": "HID"
+  },
+  "ligando_smiles": "COC1=C[C@@]23CC[N@@H+](C)[C@@H](Cc4cc(O)c(OC)cc42)C3=CC1=O",
+  "distancia_ligando_original_al_bolsillo_A": 3.0597818586693157,
+  "distancia_minima_ligando_proteina_A": 1.92,
+  "carga_soluto": 9.000001,
+  "aguas_iniciales": 14918,
+  "Na+": 36,
+  "Cl-": 45,
+  "carga_final": 1e-06,
+  "n_atomos": 49097,
+  "aguas_finales": 14837,
+  "caja_A_grados": [
+    89.506,
+    89.506,
+    89.506,
+    109.471,
+    109.471,
+    109.471
+  ]
+}
+
+Listo: sistema.prmtop / sistema.inpcrd
