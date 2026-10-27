@@ -46,6 +46,28 @@ python -m openmm.testInstallation                   # con GPU NVIDIA debe aparec
 Si CUDA da `CUDA_ERROR_UNSUPPORTED_PTX_VERSION`, el entorno trae un CUDA más nuevo que el driver. Fijarlo a
 la versión que muestra `nvidia-smi`, por ejemplo `micromamba install -c conda-forge "cuda-version=13.2"`.
 
+### Driver con CUDA 12.0–12.8 (por ejemplo, el HPC de CEDIA)
+
+Si `nvidia-smi` muestra `CUDA Version` entre 12.0 y 12.8, OpenMM 8.6 no sirve: sus builds piden CUDA ≥ 12.9.
+Usar el entorno alternativo, con OpenMM 8.2 (misma física; los scripts funcionan con ambas versiones):
+
+```bash
+micromamba create -f environment-cuda12.yml      # trae cuda-version=12.2; cambiarlo si nvidia-smi dice otro
+micromamba activate md-braf
+python -m openmm.testInstallation                # CUDA debe salir sin error
+```
+
+En el HPC de CEDIA (A100 en particiones MIG, driver 535 = CUDA 12.2), el escritorio interactivo
+*NVIDIA DeepOps Desktop* funciona con: 1 GPU de 10 GB, 4 núcleos, 16 GB de RAM, 16 h e *idle timeout*
+de 57600 s. Dentro de la sesión, lanzar la corrida con `nohup` para poder cerrar el visor:
+
+```bash
+cd simulaciones/<Compuesto_CID>/scripts
+python 02_dinamica.py --sistema ../sistema --out ../md_prueba --etapas min
+REUSAR_MIN=1 nohup bash correr_50ns.sh > corrida_50ns.log 2>&1 &
+tail -f corrida_50ns.log
+```
+
 ## Correr una simulación
 
 Desde la carpeta `scripts/` del compuesto, con el entorno activo:

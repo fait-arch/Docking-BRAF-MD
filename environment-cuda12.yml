@@ -1,0 +1,26 @@
+name: md-braf
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - ambertools=26.0   # tleap, antechamber, parmchk2, MMPBSA.py (misma versión que el reporte)
+  - openmm=8.2.0      # última versión con build para CUDA 12.0-12.8 (los de 8.3+ piden CUDA >= 12.6/12.9)
+  - cuda-version=12.2 # = "CUDA Version" que muestra nvidia-smi en la máquina (aquí, el HPC de CEDIA)
+  - pdbfixer
+  - parmed
+  - mdanalysis
+  - mdtraj
+  - openbabel
+  - rdkit
+  - vina              # AutoDock Vina 1.2
+  - pdb2pqr           # protonación (PDB2PQR + PROPKA)
+  - propka
+  - matplotlib
+  - pandas
+  - numpy
+  - scipy
+# Variante para GPUs con driver antiguo (nvidia-smi muestra CUDA Version 12.0-12.8), p. ej. el HPC de CEDIA
+# (A100, driver 535 = CUDA 12.2). Cambiar cuda-version al valor de nvidia-smi si es otro (12.0-12.8).
+# Con driver CUDA >= 12.9 o 13.x usar environment.yml (OpenMM 8.6).
+#   micromamba create -f environment-cuda12.yml && micromamba activate md-braf

@@ -29,7 +29,7 @@ Se puede ejecutar por etapas con --etapas min,cal,eq,prod (cada etapa parte del 
 de la anterior). La producción se divide en segmentos 04_prod_001, 04_prod_002, ...
 y es reanudable: si se interrumpe, al volver a lanzarla salta los segmentos ya hechos.
 """
-import argparse, os, sys, time
+import argparse, inspect, os, sys, time
 import openmm as mm
 from openmm import app, unit as u
 
@@ -87,8 +87,40 @@ def reporteros(sim, prefijo, cada_pasos_log, cada_pasos_dcd, total, dcd=True, su
                          temperature=True, density=True, progress=True, remainingTime=True, speed=True,
                          totalSteps=total, separator="\t"))
     if dcd:
-        sim.reporters.append(app.DCDReporter(prefijo + ".dcd", cada_pasos_dcd, enforcePeriodicBox=False,
-                                             atomSubset=subset))
+        if subset is None:
+            sim.reporters.append(app.DCDReporter(prefijo + ".dcd", cada_pasos_dcd, enforcePeriodicBox=False))
+        elif "atomSubset" in inspect.signature(app.DCDReporter.__init__).parameters:
+            sim.reporters.append(app.DCDReporter(prefijo + ".dcd", cada_pasos_dcd, enforcePeriodicBox=False,
+                                                 atomSubset=subset))
+        else:
+            # OpenMM antiguo (p. ej. 8.2, el que funciona con drivers CUDA 12.0-12.8): sin atomSubset
+            sim.reporters.append(DCDSubconjunto(prefijo + ".dcd", cada_pasos_dcd, subset))
+
+
+class DCDSubconjunto:
+    """Escribe en DCD solo los átomos de `subset` (equivale a DCDReporter(atomSubset=...) de OpenMM >= 8.3)."""
+
+    def __init__(self, archivo, cada, subset):
+        self._cada = cada
+        self._subset = list(subset)
+        self._out = open(archivo, "wb")
+        self._dcd = None
+
+    def describeNextReport(self, simulation):
+        pasos = self._cada - simulation.currentStep % self._cada
+        return (pasos, True, False, False, False, False)  # posiciones sin envolver en la caja
+
+    def report(self, simulation, state):
+        if self._dcd is None:
+            top = app.Topology()
+            res = top.addResidue("SUB", top.addChain())
+            for _ in self._subset:
+                top.addAtom("X", None, res)
+            top.setPeriodicBoxVectors(simulation.topology.getPeriodicBoxVectors())
+            self._dcd = app.DCDFile(self._out, top, simulation.integrator.getStepSize(),
+                                    simulation.currentStep, self._cada)
+        pos = state.getPositions(asNumpy=True)[self._subset]
+        self._dcd.writeModel(pos, periodicBoxVectors=state.getPeriodicBoxVectors())
 
 
 def cerrar_reporteros(sim):
