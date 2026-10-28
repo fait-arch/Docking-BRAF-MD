@@ -311,22 +311,26 @@ def main():
     R["dssp_final"] = {k: round(float((ss[1] == k).mean() * 100), 1) for k in ("H", "E", "C")}
 
     # ------------------------------------------------------------- docking
-    vals = []
-    for l in open(os.path.join(S, "vina_poses.pdbqt")):
-        if l.startswith("REMARK VINA RESULT"):
-            p = l.split(); vals.append((float(p[3]), float(p[4]), float(p[5])))
-    vd = pd.DataFrame(vals, columns=["afinidad", "rmsd_lb", "rmsd_ub"]); vd.index += 1
-    vd.to_csv(os.path.join(a.out, "vina_poses.csv"), index_label="pose")
-    R["vina"] = {"mejor": vd.afinidad.iloc[0], "n": len(vd), "top5": vd.afinidad.head(5).tolist(),
-                 "peor": vd.afinidad.iloc[-1]}
-    fig, ax = plt.subplots(figsize=(6.6, 2.4))
-    ax.plot(vd.index, vd.afinidad, color=C1, marker="o", ms=2.8, lw=1.0)
-    ax.scatter([1], [vd.afinidad.iloc[0]], s=40, color=C2, zorder=4)
-    ax.annotate(f"pose usada: {vd.afinidad.iloc[0]:.2f} kcal/mol", (1, vd.afinidad.iloc[0]), xytext=(8, -4),
-                textcoords="offset points", fontsize=8, color=TXT)
-    ax.set_xlabel("Pose (ordenada por afinidad)"); ax.set_ylabel("Afinidad Vina (kcal/mol)")
-    ax.set_xlim(0, len(vd) + 1)
-    guardar(fig, a.fig, "fig_vina")
+    vina_pdbqt = os.path.join(S, "vina_poses.pdbqt")
+    if not os.path.exists(vina_pdbqt):   # sistema preparado con --sin-docking
+        print("  (sin sistema/vina_poses.pdbqt: se omite la figura de docking)")
+    else:
+        vals = []
+        for l in open(vina_pdbqt):
+            if l.startswith("REMARK VINA RESULT"):
+                p = l.split(); vals.append((float(p[3]), float(p[4]), float(p[5])))
+        vd = pd.DataFrame(vals, columns=["afinidad", "rmsd_lb", "rmsd_ub"]); vd.index += 1
+        vd.to_csv(os.path.join(a.out, "vina_poses.csv"), index_label="pose")
+        R["vina"] = {"mejor": vd.afinidad.iloc[0], "n": len(vd), "top5": vd.afinidad.head(5).tolist(),
+                     "peor": vd.afinidad.iloc[-1]}
+        fig, ax = plt.subplots(figsize=(6.6, 2.4))
+        ax.plot(vd.index, vd.afinidad, color=C1, marker="o", ms=2.8, lw=1.0)
+        ax.scatter([1], [vd.afinidad.iloc[0]], s=40, color=C2, zorder=4)
+        ax.annotate(f"pose usada: {vd.afinidad.iloc[0]:.2f} kcal/mol", (1, vd.afinidad.iloc[0]), xytext=(8, -4),
+                    textcoords="offset points", fontsize=8, color=TXT)
+        ax.set_xlabel("Pose (ordenada por afinidad)"); ax.set_ylabel("Afinidad Vina (kcal/mol)")
+        ax.set_xlim(0, len(vd) + 1)
+        guardar(fig, a.fig, "fig_vina")
 
     # ------------------------------------------------------------- ligando 2D
     from rdkit import Chem
