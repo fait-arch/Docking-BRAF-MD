@@ -28,6 +28,7 @@ GUARDAR_PS=${GUARDAR_PS:-10}        # un fotograma cada 10 ps
 MMGBSA_CADA_PS=${MMGBSA_CADA_PS:-250}   # MM/GBSA con un fotograma cada 250 ps, como la clásica
 MODELO=${MODELO:-ani2x}             # ani2x (H C N O F S Cl) o ani1ccx (H C N O)
 RED=${RED:--1}                      # -1 = conjunto de 8 redes; 0..7 = una sola red (~2-3 veces más rápido)
+IMPL=${IMPL:-auto}                  # auto = NNPOps si está instalado (mucho más rápido en GPU); torchani; nnpops
 MIN_ITER=${MIN_ITER:-10000}
 BENCH_PASOS=${BENCH_PASOS:-1000}    # 0 = no medir la velocidad
 EXTRA_ML=${EXTRA_ML:-}              # opciones extra de 02_dinamica.py, p. ej. "--ml-cuda-graphs"
@@ -67,11 +68,12 @@ if [ -f "$MD/segmento_ps.txt" ] && [ "$(cat "$MD/segmento_ps.txt")" != "$SEG_PS"
     echo "ERROR: $MD usa segmentos de $(cat "$MD/segmento_ps.txt") ps y se pidió SEG_PS=$SEG_PS"; exit 1
 fi
 echo "$SEG_PS" > "$MD/segmento_ps.txt"
-ML_OPC="--ml $MODELO --ml-modelo-indice $RED $EXTRA_ML"
+ML_OPC="--ml $MODELO --ml-modelo-indice $RED --ml-implementacion $IMPL $EXTRA_ML"
 
 echo "== $COMPUESTO · ML/MM con $MODELO · producción $T_NS ns ($SEGMENTOS segmentos de $SEG_PS ps) -> $MD"
 echo "== 0) Comprobación del potencial ML (carga del ligando, elementos, GPU)"
-en_ml python potencial_ml.py --sistema ../sistema --ml "$MODELO" --ml-modelo-indice "$RED" --out "$MD/verificacion"
+en_ml python potencial_ml.py --sistema ../sistema --ml "$MODELO" --ml-modelo-indice "$RED" \
+      --ml-implementacion "$IMPL" --out "$MD/verificacion"
 
 ETAPAS="min,cal,eq,prod"
 [ -f "$MD/01_min.xml" ] && ETAPAS=${ETAPAS/min,/}
@@ -86,10 +88,10 @@ if [[ "$ETAPAS" == min,* ]]; then
     en_ml $DIN --etapas min | tee -a "$MD/run.log"
     ETAPAS=${ETAPAS/min,/}
 fi
-if [ "$BENCH_PASOS" -gt 0 ] && [ ! -f "$MD/velocidad.txt" ]; then
+if [ "$BENCH_PASOS" -gt 0 ] && [ ! -f "$MD/velocidad_${IMPL}.txt" ]; then
     echo "== 2) Velocidad esperada (ML/MM)"
     en_ml python benchmark.py --sistema ../sistema --estado "$MD/01_min.xml" --pasos "$BENCH_PASOS" $ML_OPC \
-        | tee "$MD/velocidad.txt" || true
+        | tee "$MD/velocidad_${IMPL}.txt" || true
 fi
 
 echo "== 3) Dinámica ML/MM ($ETAPAS)"

@@ -22,7 +22,7 @@ pensada para comparar las dos. Ver [`ML.md`](ML.md).
 ```
 Data/                              entradas originales (receptor SWISS-MODEL + ligando SwissParam)
 environment.yml                    entorno conda/micromamba (md-braf)
-environment-ml.yml                 entorno de la versión con machine learning (md-braf-ml); ver ML.md
+environment-ml-cuda12.yml          entorno de la versión con machine learning (md-braf-ml); ver ML.md
 simulaciones/<Compuesto_CID>/
     scripts/                       01 preparar · 02 dinámica · 03 RMSD · 04 análisis · 05 MM/GBSA
                                    benchmark.py · correr_50ns.sh · figuras_pymol.pml
@@ -112,7 +112,7 @@ Mismo protocolo, con la energía interna del ligando calculada por ANI-2x (solo 
 Macaridine y Pallidine neutra). Prueba de 20 ns, ampliable a 50 ns, y comparación con la corrida clásica:
 
 ```bash
-micromamba create -f environment-ml.yml                      # una vez (HPC: environment-ml-cuda12.yml)
+micromamba create -f environment-ml-cuda12.yml               # una vez (incluye NNPOps, que acelera la red)
 cd simulaciones/Macaridine_94717379/scripts
 nohup bash correr_ml.sh > corrida_ml_20ns.log 2>&1 &          # 20 ns
 T_PROD_PS=50000 nohup bash correr_ml.sh > corrida_ml_50ns.log 2>&1 &   # amplía a 50 ns

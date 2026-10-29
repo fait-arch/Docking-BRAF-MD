@@ -62,7 +62,8 @@ def construir(prmtop, cutoff_nm):
         import potencial_ml
         system, _ = potencial_ml.convertir_a_mlmm(system, prmtop.topology, ML["posiciones"], ML["modelo"],
                                                   ML["indice"], ML["cuda_graphs"], ML["carpeta"],
-                                                  verbose=ML.pop("verbose", False), doble=ML["doble"])
+                                                  verbose=ML.pop("verbose", False), doble=ML["doble"],
+                                                  implementacion=ML["implementacion"])
     return system
 
 
@@ -192,6 +193,8 @@ def main():
                     help="-1 = conjunto de 8 redes (más exacto); 0-7 = una sola red (más rápido)")
     ap.add_argument("--ml-doble", action="store_true", help="evaluar la red en float64 (más lento)")
     ap.add_argument("--ml-cuda-graphs", action="store_true", help="usar CUDA graphs en la TorchForce")
+    ap.add_argument("--ml-implementacion", default="auto", choices=("auto", "nnpops", "torchani"),
+                    help="auto = NNPOps (mucho más rápido en GPU) si está instalado; si no, TorchANI")
     a = ap.parse_args()
 
     os.makedirs(a.out, exist_ok=True)
@@ -212,6 +215,7 @@ def main():
     global ML
     if a.ml != "no":
         ML = {"modelo": a.ml, "indice": a.ml_modelo_indice, "cuda_graphs": a.ml_cuda_graphs, "doble": a.ml_doble,
+              "implementacion": a.ml_implementacion,
               "posiciones": inpcrd.positions, "carpeta": a.out, "verbose": True}
         print(f"Método: ML/MM, ligando con {a.ml.upper()} (proteína, agua e iones con ff19SB/TIP3P)")
     T = a.temperatura * u.kelvin

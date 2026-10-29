@@ -20,6 +20,7 @@ ap.add_argument("--ml", default="no", choices=("no", "ani2x", "ani1ccx"))
 ap.add_argument("--ml-modelo-indice", type=int, default=-1)
 ap.add_argument("--ml-doble", action="store_true")
 ap.add_argument("--ml-cuda-graphs", action="store_true")
+ap.add_argument("--ml-implementacion", default="auto", choices=("auto", "nnpops", "torchani"))
 a = ap.parse_args()
 
 prm = app.AmberPrmtopFile(f"{a.sistema}/sistema.prmtop")
@@ -28,7 +29,8 @@ if a.ml != "no":
     import tempfile, potencial_ml
     inp = app.AmberInpcrdFile(f"{a.sistema}/sistema.inpcrd")
     s, _ = potencial_ml.convertir_a_mlmm(s, prm.topology, inp.positions, a.ml, a.ml_modelo_indice,
-                                         a.ml_cuda_graphs, tempfile.mkdtemp(), doble=a.ml_doble)
+                                         a.ml_cuda_graphs, tempfile.mkdtemp(), doble=a.ml_doble,
+                                         implementacion=a.ml_implementacion)
 s.addForce(mm.MonteCarloBarostat(1 * u.atmosphere, 310 * u.kelvin, 25))
 integ = mm.LangevinMiddleIntegrator(310 * u.kelvin, 1 / u.picosecond, 2 * u.femtosecond)
 if a.plataforma == "auto":

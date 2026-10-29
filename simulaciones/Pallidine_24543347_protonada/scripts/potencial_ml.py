@@ -88,18 +88,49 @@ class EnergiaANI(torch.nn.Module):
         return (e - self.e_ref).sum()
 
 
-def _modulo_ani(modelo, especies, idx, modelo_indice, doble=False):
-    kw = {"periodic_table_index": True}
-    if modelo_indice is not None and modelo_indice >= 0:
-        kw["model_index"] = modelo_indice
-    red = getattr(torchani.models, {"ani2x": "ANI2x", "ani1ccx": "ANI1ccx"}[modelo])(**kw)
+def _red_torchani(modelo, modelo_indice):
+    clase = getattr(torchani.models, {"ani2x": "ANI2x", "ani1ccx": "ANI1ccx"}[modelo])
+    try:                                   # TorchANI >= 2.3
+        kw = {"periodic_table_index": True}
+        if modelo_indice is not None and modelo_indice >= 0:
+            kw["model_index"] = modelo_indice
+        return clase(**kw)
+    except TypeError:                      # TorchANI 2.2: la red individual se toma por índice
+        red = clase(periodic_table_index=True)
+        return red[modelo_indice] if modelo_indice is not None and modelo_indice >= 0 else red
+
+
+def nnpops_disponible():
+    try:
+        from NNPOps import OptimizedTorchANI  # noqa: F401  (NNPOps <= 0.6, con TorchANI 2.2)
+        return True
+    except Exception:
+        return False
+
+
+def _modulo_ani(modelo, especies, idx, modelo_indice, doble=False, implementacion="auto"):
+    """Devuelve (módulo para OpenMM, módulo TorchANI de referencia, implementación usada)."""
+    t_esp = torch.tensor([especies], dtype=torch.int64)
+    t_idx = torch.tensor(idx, dtype=torch.int64)
+    red = _red_torchani(modelo, modelo_indice)
+    usada = "torchani"
+    if implementacion in ("auto", "nnpops") and not doble:
+        if nnpops_disponible():
+            from NNPOps import OptimizedTorchANI
+            red_opt = OptimizedTorchANI(_red_torchani(modelo, modelo_indice), t_esp)
+            usada = "nnpops"
+        elif implementacion == "nnpops":
+            sys.exit("ERROR: se pidió --ml-implementacion nnpops pero NNPOps (OptimizedTorchANI) no está "
+                     "instalado; en el entorno md-braf-ml: micromamba install -c conda-forge nnpops=0.6")
     if doble:
         red = red.to(torch.float64)
-    return EnergiaANI(red, torch.tensor([especies], dtype=torch.int64), torch.tensor(idx, dtype=torch.int64), doble)
+    ref = EnergiaANI(red, t_esp, t_idx, doble)
+    mod = EnergiaANI(red_opt, t_esp.clone(), t_idx.clone(), doble) if usada == "nnpops" else ref
+    return mod, ref, usada
 
 
 def convertir_a_mlmm(system, topology, posiciones, modelo="ani2x", modelo_indice=None,
-                     cuda_graphs=False, carpeta=".", verbose=True, doble=False):
+                     cuda_graphs=False, carpeta=".", verbose=True, doble=False, implementacion="auto"):
     """Devuelve una copia de `system` con el ligando descrito por `modelo` (ML/MM)."""
     from openmmtorch import TorchForce
 
@@ -144,14 +175,17 @@ def convertir_a_mlmm(system, topology, posiciones, modelo="ani2x", modelo_indice
 
     atomos = list(topology.atoms())
     especies = [atomos[i].element.atomic_number for i in idx]
-    mod = _modulo_ani(modelo, especies, idx, modelo_indice, doble)
+    mod, ref, usada = _modulo_ani(modelo, especies, idx, modelo_indice, doble, implementacion)
     # referencia de energía: ANI en la geometría inicial (solo desplaza la energía potencial
-    # registrada para que quede en la misma escala que la clásica; no cambia las fuerzas)
+    # registrada para que quede en la misma escala que la clásica; no cambia las fuerzas).
+    # Se evalúa con TorchANI para no inicializar el módulo optimizado (NNPOps) en la CPU.
     with torch.no_grad():
         x = torch.tensor(np.array(posiciones.value_in_unit(u.nanometer), dtype=np.float64))
         bv = np.array([[v.value_in_unit(u.nanometer) for v in vec] for vec in topology.getPeriodicBoxVectors()]) \
             if topology.getPeriodicBoxVectors() is not None else np.eye(3) * 100.0
-        mod.e_ref.copy_(mod(x, torch.tensor(bv)).reshape(1))
+        e0 = ref(x, torch.tensor(bv)).reshape(1)
+        ref.e_ref.copy_(e0)
+        mod.e_ref.copy_(e0)
     os.makedirs(carpeta, exist_ok=True)
     ruta = os.path.join(carpeta, f"{modelo}_ligando.pt")
     torch.jit.script(mod).save(ruta)
@@ -166,10 +200,11 @@ def convertir_a_mlmm(system, topology, posiciones, modelo="ani2x", modelo_indice
     info = {"modelo": modelo, "modelo_indice": modelo_indice, "atomos_ligando": len(idx), "elementos": elem,
             "carga_ligando": round(q, 3), "terminos_anulados": anulados, "restricciones_H_ligando": "se mantienen",
             "acoplamiento": "mecánico (ligando–entorno con GAFF/AM1-BCC + LJ)",
-            "precision_red": "float64" if doble else "float32", "e_ref_kJ_mol": float(mod.e_ref.item())}
+            "precision_red": "float64" if doble else "float32", "implementacion": usada,
+            "e_ref_kJ_mol": float(mod.e_ref.item())}
     if verbose:
         print(f"  ML/MM: {modelo}{' (red %d)' % modelo_indice if modelo_indice is not None and modelo_indice >= 0 else ' (conjunto de 8 redes)'}"
-              f" para {len(idx)} átomos del ligando ({', '.join(elem)}; carga {q:+.2f})")
+              f" para {len(idx)} átomos del ligando ({', '.join(elem)}; carga {q:+.2f}); implementación: {usada}")
         print(f"         términos clásicos anulados: {anulados}")
     return new, info
 
@@ -179,6 +214,9 @@ def main():
     ap.add_argument("--sistema", default="../sistema")
     ap.add_argument("--ml", default="ani2x", choices=MODELOS)
     ap.add_argument("--ml-modelo-indice", type=int, default=-1, help="-1 = conjunto de 8 redes")
+    ap.add_argument("--ml-implementacion", default="auto", choices=("auto", "nnpops", "torchani"),
+                    help="auto = NNPOps (más rápido) si está instalado; si no, TorchANI")
+    ap.add_argument("--ml-cuda-graphs", action="store_true")
     ap.add_argument("--plataforma", default="auto")
     ap.add_argument("--out", default=None, help="carpeta para guardar el modelo TorchScript (por defecto, temporal)")
     a = ap.parse_args()
@@ -190,7 +228,9 @@ def main():
     carpeta = a.out or tempfile.mkdtemp()
     for i, f in enumerate(clas.getForces()):
         f.setForceGroup(i % 31)
-    mlsys, info = convertir_a_mlmm(clas, prmtop.topology, inpcrd.positions, a.ml, a.ml_modelo_indice, carpeta=carpeta)
+    mlsys, info = convertir_a_mlmm(clas, prmtop.topology, inpcrd.positions, a.ml, a.ml_modelo_indice,
+                                   cuda_graphs=a.ml_cuda_graphs, carpeta=carpeta,
+                                   implementacion=a.ml_implementacion)
     mlsys.getForce(mlsys.getNumForces() - 1).setForceGroup(31)
     if a.plataforma == "auto":
         for n in ("CUDA", "HIP", "OpenCL", "CPU"):
@@ -212,6 +252,13 @@ def main():
     e_cl = ctx2.getState(getEnergy=True).getPotentialEnergy()
     e_ml = ctx.getState(getEnergy=True).getPotentialEnergy()
     print(f"  Energía total: clásica {e_cl}  |  ML/MM {e_ml}")
+    import time
+    ctx.getState(getForces=True, groups={31})
+    t0 = time.time(); n = 20
+    for _ in range(n):
+        ctx.getState(getForces=True, groups={31})
+    print(f"  Costo de la red: {1000 * (time.time() - t0) / n:.1f} ms por evaluación de fuerzas "
+          f"(implementación {info['implementacion']})")
     print(json.dumps(info, ensure_ascii=False, indent=1))
     print("Verificación correcta: el sistema ML/MM se puede simular.")
 

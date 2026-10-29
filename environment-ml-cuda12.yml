@@ -1,6 +1,8 @@
 name: md-braf-ml
-# Versión de environment-ml.yml para drivers NVIDIA con CUDA 12.0-12.8 (por ejemplo, el HPC de CEDIA
-# con driver 535 / CUDA 12.2): OpenMM 8.2 y PyTorch compilado para CUDA 12.
+# Entorno RECOMENDADO para la versión ML/MM: OpenMM 8.2 + PyTorch 2.5 (CUDA 12) + TorchANI 2.2 + NNPOps 0.6.
+# NNPOps acelera mucho la red ANI-2x en la GPU, y solo existe para esta combinación de versiones.
+# Sirve para cualquier driver NVIDIA con CUDA >= 12.2 (HPC de CEDIA: driver 535 / CUDA 12.2; también
+# drivers más nuevos, que admiten programas compilados para CUDA 12).
 channels:
   - conda-forge
   - nodefaults
@@ -8,7 +10,11 @@ dependencies:
   - python=3.11
   - cuda-version=12.2
   - openmm=8.2
-  - openmm-torch=*=cuda*
-  - pytorch=*=cuda*
-  - torchani
+  - openmm-torch=1.5=*cuda*
+  - pytorch=2.5=*cuda*
+  - torchani=2.2.4
+  - nnpops=0.6
   - numpy
+# Si el entorno ya existe sin NNPOps, basta con:
+#   micromamba install -y -n md-braf-ml -c conda-forge "nnpops=0.6" "pytorch=2.5" "torchani=2.2.4" \
+#                      "openmm=8.2" "openmm-torch=1.5" "cuda-version=12.2"
