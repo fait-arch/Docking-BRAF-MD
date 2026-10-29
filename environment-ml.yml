@@ -1,0 +1,20 @@
+name: md-braf-ml
+# Entorno para la versión con machine learning (ML/MM): el ligando se describe con el potencial
+# de red neuronal ANI-2x dentro de OpenMM. Solo se usa para la dinámica (02_dinamica.py --ml);
+# el análisis y el MM/GBSA siguen en el entorno md-braf (environment.yml).
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - openmm
+  - openmm-torch=*=cuda*   # TorchForce: ejecuta la red neuronal en la GPU dentro de OpenMM
+  - pytorch=*=cuda*        # PyTorch con CUDA
+  - torchani               # ANI-2x y ANI-1ccx
+  - numpy
+# Notas
+# - Los pesos de ANI-2x (~52 MB) se descargan de GitHub la primera vez que se usan.
+# - Si `python potencial_ml.py` o OpenMM dan un error de CUDA (por ejemplo, CUDA_ERROR_UNSUPPORTED_PTX_VERSION),
+#   fijar cuda-version a la que admite el driver (la que muestra nvidia-smi), por ejemplo:
+#     micromamba install -n md-braf-ml -c conda-forge "cuda-version=12.9"
+# - Sin GPU NVIDIA (solo para probar): quitar "=*=cuda*" de openmm-torch y pytorch.

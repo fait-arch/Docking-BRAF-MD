@@ -13,14 +13,20 @@ figuras **no** se versionan: se generan al correr los scripts (ver `.gitignore`)
 | Pallidine | 24543347 | `simulaciones/Pallidine_24543347/` |
 | Pallidine protonada (NH⁺, +1) | 24543347 | `simulaciones/Pallidine_24543347_protonada/` |
 
+Hay dos versiones de la dinámica con el mismo protocolo del artículo: la **clásica** (`correr_50ns.sh`, ligando
+con GAFF) y una **con machine learning** (`correr_ml.sh`, ligando con el potencial de red neuronal ANI-2x),
+pensada para comparar las dos. Ver [`ML.md`](ML.md).
+
 ## Estructura
 
 ```
 Data/                              entradas originales (receptor SWISS-MODEL + ligando SwissParam)
 environment.yml                    entorno conda/micromamba (md-braf)
+environment-ml.yml                 entorno de la versión con machine learning (md-braf-ml); ver ML.md
 simulaciones/<Compuesto_CID>/
     scripts/                       01 preparar · 02 dinámica · 03 RMSD · 04 análisis · 05 MM/GBSA
                                    benchmark.py · correr_50ns.sh · figuras_pymol.pml
+                                   potencial_ml.py · correr_ml.sh · 06 comparar clásico vs ML
     sistema/                       sistema AMBER ya preparado (topología, coordenadas, ligando GAFF, poses de Vina)
     entrada/                       (Pallidine) copia de las entradas de Data/
     README.md                      detalles y resultados de la prueba rápida de ese compuesto
@@ -99,6 +105,20 @@ python 03_rmsd.py --sistema ../sistema --md ../md_prueba --out ../resultados_pru
 Los resultados quedan en `md_*/`, `analisis_*/` y `resultados_*/` dentro de la carpeta del compuesto,
 ignorados por git. Velocidad de referencia con ~49 000 átomos: ~0.8 ns/día con 2 CPU y ~135 ns/día con una
 RTX 3060 de portátil (CUDA). Con GPU, 50 ns tardan unas 9 h por compuesto, más el análisis.
+
+## Versión con machine learning (ML/MM)
+
+Mismo protocolo, con la energía interna del ligando calculada por ANI-2x (solo ligandos neutros:
+Macaridine y Pallidine neutra). Prueba de 20 ns, ampliable a 50 ns, y comparación con la corrida clásica:
+
+```bash
+micromamba create -f environment-ml.yml                      # una vez (HPC: environment-ml-cuda12.yml)
+cd simulaciones/Macaridine_94717379/scripts
+nohup bash correr_ml.sh > corrida_ml_20ns.log 2>&1 &          # 20 ns
+T_PROD_PS=50000 nohup bash correr_ml.sh > corrida_ml_50ns.log 2>&1 &   # amplía a 50 ns
+```
+
+Detalles, tiempos e interpretación en [`ML.md`](ML.md).
 
 ## Añadir un compuesto
 

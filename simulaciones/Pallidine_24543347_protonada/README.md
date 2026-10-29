@@ -33,3 +33,9 @@ REUSAR_MIN=1 nohup bash correr_50ns.sh > corrida_50ns.log 2>&1 &
 
 Resultados en `md_50ns/`, `analisis_50ns/` y `resultados_50ns/` (ignorados por git). Comparar con
 `../Pallidine_24543347/` (misma corrida con el ligando neutro).
+
+## Versión con machine learning
+
+No hay versión ML/MM para esta forma: ANI-2x solo está entrenado con moléculas neutras y no puede describir
+el catión (`02_dinamica.py --ml ani2x` se detiene con un aviso). La comparación clásico frente a ML se hace
+con Macaridine y con Pallidine neutra (`../../ML.md`).

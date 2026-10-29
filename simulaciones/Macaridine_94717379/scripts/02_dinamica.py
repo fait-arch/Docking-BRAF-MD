@@ -28,6 +28,11 @@ Prueba rápida (mismos parámetros, tiempos cortos):
 Se puede ejecutar por etapas con --etapas min,cal,eq,prod (cada etapa parte del .xml
 de la anterior). La producción se divide en segmentos 04_prod_001, 04_prod_002, ...
 y es reanudable: si se interrumpe, al volver a lanzarla salta los segmentos ya hechos.
+
+Versión con machine learning (ML/MM): --ml ani2x describe el ligando con el potencial de red
+neuronal ANI-2x (ver potencial_ml.py) y deja todo lo demás igual. Necesita el entorno
+md-braf-ml (environment-ml.yml) y un ligando neutro. Ejemplo:
+  python 02_dinamica.py --ml ani2x --sistema ../sistema --out ../md_ml --t-produccion 20000 --segmentos 4
 """
 import argparse, inspect, os, sys, time
 import openmm as mm
@@ -47,9 +52,17 @@ def plataforma(nombre):
     return mm.Platform.getPlatformByName("Reference")
 
 
+ML = None   # configuración ML/MM (se rellena en main si se usa --ml)
+
+
 def construir(prmtop, cutoff_nm):
     system = prmtop.createSystem(nonbondedMethod=app.PME, nonbondedCutoff=cutoff_nm * u.nanometer,
                                  constraints=app.HBonds, rigidWater=True)
+    if ML is not None:
+        import potencial_ml
+        system, _ = potencial_ml.convertir_a_mlmm(system, prmtop.topology, ML["posiciones"], ML["modelo"],
+                                                  ML["indice"], ML["cuda_graphs"], ML["carpeta"],
+                                                  verbose=ML.pop("verbose", False), doble=ML["doble"])
     return system
 
 
@@ -173,12 +186,34 @@ def main():
     ap.add_argument("--plataforma", default="auto")
     ap.add_argument("--hilos", type=int, default=0)
     ap.add_argument("--semilla", type=int, default=2022)
+    ap.add_argument("--ml", default="no", choices=("no", "ani2x", "ani1ccx"),
+                    help="describir el ligando con un potencial de machine learning (ML/MM)")
+    ap.add_argument("--ml-modelo-indice", type=int, default=-1,
+                    help="-1 = conjunto de 8 redes (más exacto); 0-7 = una sola red (más rápido)")
+    ap.add_argument("--ml-doble", action="store_true", help="evaluar la red en float64 (más lento)")
+    ap.add_argument("--ml-cuda-graphs", action="store_true", help="usar CUDA graphs en la TorchForce")
     a = ap.parse_args()
 
     os.makedirs(a.out, exist_ok=True)
     etapas = a.etapas.split(",")
     prmtop = app.AmberPrmtopFile(os.path.join(a.sistema, "sistema.prmtop"))
     inpcrd = app.AmberInpcrdFile(os.path.join(a.sistema, "sistema.inpcrd"))
+    # una carpeta de trayectoria es de un solo método: no mezclar segmentos clásicos y ML/MM
+    metodo = "clasico" if a.ml == "no" else f"mlmm-{a.ml}" + (f"-red{a.ml_modelo_indice}" if a.ml_modelo_indice >= 0 else "")
+    marca = os.path.join(a.out, "metodo.txt")
+    if os.path.exists(marca):
+        previo = open(marca).read().strip()
+        if previo != metodo:
+            sys.exit(f"ERROR: {a.out} contiene una simulación '{previo}' y se pidió '{metodo}'. Usar otra carpeta --out.")
+    elif any(n.endswith(".xml") for n in os.listdir(a.out)) and metodo != "clasico":
+        sys.exit(f"ERROR: {a.out} ya tiene estados de una simulación clásica. Usar otra carpeta --out.")
+    else:
+        open(marca, "w").write(metodo + "\n")
+    global ML
+    if a.ml != "no":
+        ML = {"modelo": a.ml, "indice": a.ml_modelo_indice, "cuda_graphs": a.ml_cuda_graphs, "doble": a.ml_doble,
+              "posiciones": inpcrd.positions, "carpeta": a.out, "verbose": True}
+        print(f"Método: ML/MM, ligando con {a.ml.upper()} (proteína, agua e iones con ff19SB/TIP3P)")
     T = a.temperatura * u.kelvin
     dt = a.dt * u.femtoseconds
     ps2steps = lambda t_ps: int(round(t_ps / (a.dt / 1000.0)))

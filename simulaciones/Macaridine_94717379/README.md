@@ -138,3 +138,14 @@ python 04_analisis_reporte.py --base .. --fig ../resultados_prueba --out ../anal
 python 05_mmgbsa_figura.py --mmgbsa ../analisis/mmgbsa --fig ../resultados_prueba
 pymol -cq figuras_pymol.pml        # figuras 3D (quedan en resultados_prueba/)
 ```
+
+## Versión con machine learning (ML/MM)
+
+`correr_ml.sh` repite el mismo protocolo con la energía interna del ligando calculada por la red neuronal
+ANI-2x (`potencial_ml.py`), corre 20 ns (ampliables a 50 ns con `T_PROD_PS=50000`) y compara con la corrida
+clásica de `md_50ns/` (`06_comparar_clasico_ml.py`). Instalación, tiempos e interpretación en `../../ML.md`.
+
+```bash
+nohup bash correr_ml.sh > corrida_ml_20ns.log 2>&1 &
+T_PROD_PS=50000 nohup bash correr_ml.sh > corrida_ml_50ns.log 2>&1 &
+```

@@ -2,6 +2,10 @@
 simulaciones/*/md_*/
 simulaciones/*/analisis*/
 simulaciones/*/resultados*/
+simulaciones/*/comparacion*/
+# resultados copiados desde otros equipos a la raíz del repositorio
+/resultados_50ns/
+/trayectorias_50ns/
 *.dcd
 *.nc
 *.chk

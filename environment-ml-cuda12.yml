@@ -1,0 +1,14 @@
+name: md-braf-ml
+# Versión de environment-ml.yml para drivers NVIDIA con CUDA 12.0-12.8 (por ejemplo, el HPC de CEDIA
+# con driver 535 / CUDA 12.2): OpenMM 8.2 y PyTorch compilado para CUDA 12.
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - cuda-version=12.2
+  - openmm=8.2
+  - openmm-torch=*=cuda*
+  - pytorch=*=cuda*
+  - torchani
+  - numpy
