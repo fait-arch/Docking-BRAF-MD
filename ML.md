@@ -34,6 +34,10 @@ micromamba create -f environment-ml.yml          # crea el entorno md-braf-ml (P
 # HPC de CEDIA (driver CUDA 12.2):  micromamba create -f environment-ml-cuda12.yml
 ```
 
+`MAMBA_ROOT_PREFIX` debe ser una ruta **absoluta** (por ejemplo `$HOME/micromamba`). Si vale algo relativo,
+como `y`, micromamba busca los entornos en una carpeta distinta según el directorio actual y `correr_ml.sh`
+se detiene con un aviso.
+
 El entorno `md-braf` (el de siempre) se sigue usando para el análisis y el MM/GBSA; `correr_ml.sh` llama a
 cada entorno cuando lo necesita, así que no hace falta activar ninguno.
 

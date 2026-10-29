@@ -38,8 +38,18 @@ GB_CLASICO=${GB_CLASICO:-../analisis_50ns/mmgbsa}
 
 MM=${MAMBA_EXE:-$(command -v micromamba || true)}
 [ -n "$MM" ] || { echo "ERROR: no encuentro micromamba (abrir una terminal nueva o definir MAMBA_EXE)"; exit 1; }
+case "${MAMBA_ROOT_PREFIX:-}" in
+    /*) ;;
+    "") echo "AVISO: MAMBA_ROOT_PREFIX no está definido; micromamba usará su carpeta por defecto." ;;
+    *)  echo "ERROR: MAMBA_ROOT_PREFIX='$MAMBA_ROOT_PREFIX' es una ruta relativa: micromamba buscaría los entornos"
+        echo "       en una carpeta distinta según el directorio actual. Definirlo con una ruta absoluta, p. ej."
+        echo "       export MAMBA_ROOT_PREFIX=\"\$HOME/micromamba\"  (y lo mismo en ~/.bashrc)"; exit 1 ;;
+esac
 en_ml() { "$MM" run -n "$ENV_ML" "$@"; }
 en_md() { "$MM" run -n "$ENV_MD" "$@"; }
+for e in "$ENV_ML" "$ENV_MD"; do
+    "$MM" run -n "$e" true 2>/dev/null || { echo "ERROR: no existe el entorno '$e' en ${MAMBA_ROOT_PREFIX:-la carpeta por defecto} (ver ML.md)"; exit 1; }
+done
 calc() { awk "BEGIN{print $1}"; }
 
 COMPUESTO=$(basename "$(cd .. && pwd)")
