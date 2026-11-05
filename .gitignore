@@ -11,6 +11,7 @@ nohup.out
 # Python
 __pycache__/
 *.pyc
+*.egg-info/
 
 # Prefijos de micromamba creados por error dentro del proyecto
 simulaciones/*/y/
