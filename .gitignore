@@ -22,3 +22,20 @@ simulaciones/*/y/
 /*.out
 /*.synctex.gz
 *.swp
+
+# dmlrun: registro local de ejecuciones, informes y corridas nuevas
+.dmlrun/
+reportes/
+*/*/runs/
+.vista/
+
+# LaTeX del reporte (paper/): se versiona el .tex y las figuras, no lo generado
+paper/*.aux
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/*.toc
+paper/*.bak
+paper/simulacion.pdf

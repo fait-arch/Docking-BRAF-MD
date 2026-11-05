@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dmlrun"
+version = "1.0.0"
+description = "Orquestación de los pipelines de docking y dinámica molecular de BRAF V600E sobre HPC (Slurm) y otros servidores Linux"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+# Lo único que necesita la CLI para funcionar. Las bibliotecas científicas
+# (OpenMM, AmberTools, MDAnalysis, RDKit...) las instala environment.yml, no
+# pip: vienen de conda-forge y algunas no existen como ruedas de PyPI.
+dependencies = ["pyyaml>=6.0"]
+
+[project.optional-dependencies]
+# El pipeline de machine learning necesita además el paquete dockingML, que
+# aporta los comandos dml-dock, dml-features, dml-train y dml-rescore.
+# Se instala aparte desde su propio repositorio:
+#     pip install -e /ruta/a/dockingML
+ml = []
+
+[project.scripts]
+dmlrun = "dmlrun.cli:main"
+
+[tool.setuptools]
+packages = ["dmlrun"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+dmlrun = ["../config/*.yaml"]

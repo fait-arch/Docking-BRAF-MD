@@ -1,0 +1,151 @@
+# =============================================================================
+#  Perfiles de entorno de ejecución.
+#
+#  Se seleccionan desde la terminal con:   dmlrun run ... --servidor <nombre>
+#  Nada más hay que tocar en el código: la CLI resuelve gestor de colas,
+#  recursos, módulos, entorno y plataforma de OpenMM a partir de este archivo.
+#
+#  `dmlrun servidores` lista los perfiles; `dmlrun config --servidor X` muestra
+#  el perfil resuelto y comprueba, en la máquina actual, que exista lo que pide.
+#
+#  Para añadir una PC nueva: copia un bloque, cambia los valores y ya puedes
+#  usar --servidor <nombre> desde esa máquina.
+# =============================================================================
+version: 1
+
+# Valores heredados por todos los perfiles; cada uno puede sobrescribirlos.
+defaults:
+  scheduler: local            # local | slurm
+  gestor_entorno: micromamba  # micromamba | conda
+  cpus: 4
+  memoria_gb: 16
+  horas: 8
+  gpus: 0
+  gres: null
+  plataforma_openmm: auto     # auto | CUDA | HIP | OpenCL | CPU
+  conda_env: md-braf
+  modulos: []
+  pre_comandos: []
+  post_comandos: []
+  variables: {}
+  particion: null
+  cuenta: null
+  qos: null
+  nodos: null
+  sbatch_extra: []
+  raiz_proyecto: null
+  email: null
+
+servidores:
+
+  # ---------------------------------------------------------------------------
+  #  HPC CEDIA — Slurm, A100 particionadas en MIG, driver 535 (CUDA 12.2).
+  #
+  #  Con ese driver hace falta el entorno `environment-cuda12.yml` (OpenMM 8.2):
+  #  los builds de OpenMM 8.6 piden CUDA >= 12.9 y fallan con PTX no soportado.
+  #
+  #  `gres` debe coincidir con lo que declare el nodo. En nodos con MIG no es
+  #  `gpu:1` sino el perfil concreto; compruébalo con:
+  #      scontrol show node compute-0-0 | grep -i gres
+  #  Si no coincide, sbatch responde "Requested node configuration is not
+  #  available" y no llega a encolarse.
+  # ---------------------------------------------------------------------------
+  hpc:
+    descripcion: "HPC CEDIA (Slurm, A100 MIG 10 GB, driver CUDA 12.2)"
+    scheduler: slurm
+    particion: interactive
+    cpus: 4
+    memoria_gb: 16
+    horas: 16
+    gpus: 1
+    gres: "gpu:1"
+    plataforma_openmm: CUDA
+    conda_env: md-braf
+    gestor_entorno: micromamba
+    pre_comandos:
+      - 'export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-$HOME/micromamba}"'
+      - 'eval "$(micromamba shell hook -s bash)"'
+    variables:
+      OPENMM_DEFAULT_PLATFORM: CUDA
+
+  # Mismo HPC sin GPU: análisis, MM/GBSA y machine learning no la necesitan y
+  # así no se consume cuota de GPU mientras se procesan las trayectorias.
+  hpc-cpu:
+    descripcion: "HPC CEDIA (Slurm, solo CPU: análisis, MM/GBSA y ML)"
+    scheduler: slurm
+    particion: interactive
+    cpus: 16
+    memoria_gb: 48
+    horas: 24
+    gpus: 0
+    plataforma_openmm: CPU
+    conda_env: md-braf
+    gestor_entorno: micromamba
+    pre_comandos:
+      - 'export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-$HOME/micromamba}"'
+      - 'eval "$(micromamba shell hook -s bash)"'
+    variables:
+      OPENMM_CPU_THREADS: "${SLURM_CPUS_PER_TASK:-16}"
+
+  # ---------------------------------------------------------------------------
+  #  Servidores Linux sin gestor de colas: el trabajo se lanza con setsid y
+  #  sobrevive al cierre de la terminal o de la sesión SSH.
+  # ---------------------------------------------------------------------------
+  linux-gpu:
+    descripcion: "Servidor Linux con GPU NVIDIA, sin cola"
+    scheduler: local
+    cpus: 8
+    memoria_gb: 32
+    gpus: 1
+    plataforma_openmm: CUDA
+    conda_env: md-braf
+    gestor_entorno: micromamba
+    pre_comandos:
+      - 'export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-$HOME/micromamba}"'
+      - 'eval "$(micromamba shell hook -s bash)"'
+    variables:
+      CUDA_VISIBLE_DEVICES: "0"
+
+  linux-cpu:
+    descripcion: "Servidor Linux solo CPU, sin cola"
+    scheduler: local
+    cpus: 8
+    memoria_gb: 16
+    gpus: 0
+    plataforma_openmm: CPU
+    conda_env: md-braf
+    gestor_entorno: micromamba
+    pre_comandos:
+      - 'export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-$HOME/micromamba}"'
+      - 'eval "$(micromamba shell hook -s bash)"'
+    variables:
+      OPENMM_CPU_THREADS: "8"
+
+  # ---------------------------------------------------------------------------
+  #  Portátil con RTX 3060: ~135 ns/día con este sistema (~49 000 átomos),
+  #  es decir unas 9 h por compuesto para 50 ns.
+  # ---------------------------------------------------------------------------
+  portatil:
+    descripcion: "Portátil con RTX 3060 (CUDA)"
+    scheduler: local
+    cpus: 6
+    memoria_gb: 16
+    gpus: 1
+    plataforma_openmm: CUDA
+    conda_env: md-braf
+    gestor_entorno: micromamba
+    pre_comandos:
+      - 'export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-$HOME/micromamba}"'
+      - 'eval "$(micromamba shell hook -s bash)"'
+
+  # Aquí mismo, con el entorno que ya esté activo: no activa nada. Útil para
+  # etapas cortas, para generar figuras y para probar la CLI.
+  actual:
+    descripcion: "Máquina actual, con el entorno ya activo"
+    scheduler: local
+    cpus: 4
+    memoria_gb: 8
+    gpus: 0
+    plataforma_openmm: auto
+    conda_env: null
+    pre_comandos: []

@@ -1,0 +1,122 @@
+| Run on Tue Oct 27 21:05:47 2026
+|
+|Input file:
+|--------------------------------------------------------------
+|MM/GBSA Pallidine protonada (NH+)-BRAF V600E (50ns)
+|&general
+|  startframe=1, endframe=5000, interval=25, verbose=2, keep_files=0,
+|/
+|&gb
+|  igb=5, saltcon=0.150,
+|/
+|&decomp
+|  idecomp=1, dec_verbose=0,
+|/
+|--------------------------------------------------------------
+|MMPBSA.py Version=14.0
+|Complex topology file:           com.prmtop
+|Receptor topology file:          rec.prmtop
+|Ligand topology file:            lig.prmtop
+|Initial mdcrd(s):                /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_001.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_002.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_003.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_004.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_005.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_006.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_007.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_008.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_009.dcd
+|                                 /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_010.dcd
+|
+|Receptor mask:                  ":1-276"
+|Ligand mask:                    ":277"
+|Ligand residue name is "LIG"
+|
+|Calculations performed using 200.96 complex frames.
+|
+|Generalized Born ESURF calculated using 'LCPO' surface areas
+|
+|All units are reported in kcal/mole.
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+GENERALIZED BORN:
+
+Complex:
+Energy Component            Average              Std. Dev.   Std. Err. of Mean
+-------------------------------------------------------------------------------
+BOND                       854.4079               25.6852              1.8162
+ANGLE                     2343.9654               38.6421              2.7324
+DIHED                     1555.8777               20.6532              1.4604
+VDWAALS                  -2250.0552               25.1640              1.7794
+EEL                     -19054.5409              133.2963              9.4255
+1-4 VDW                   1017.2585               13.0952              0.9260
+1-4 EEL                  11293.8495               42.4230              2.9998
+EGB                      -3514.7903              111.7769              7.9038
+ESURF                      100.4715                2.1116              0.1493
+
+G gas                    -4239.2370              135.1456              9.5562
+G solv                   -3414.3188              110.5891              7.8198
+
+TOTAL                    -7653.5558               52.9169              3.7418
+
+
+Receptor:
+Energy Component            Average              Std. Dev.   Std. Err. of Mean
+-------------------------------------------------------------------------------
+BOND                       844.9222               25.7289              1.8193
+ANGLE                     2321.4799               38.4668              2.7200
+DIHED                     1545.8993               20.2940              1.4350
+VDWAALS                  -2201.2646               24.6938              1.7461
+EEL                     -19112.7720              132.0230              9.3354
+1-4 VDW                   1003.3531               13.0881              0.9255
+1-4 EEL                  11227.5289               42.2294              2.9861
+EGB                      -3397.5095              110.9044              7.8421
+ESURF                      102.3563                2.1325              0.1508
+
+G gas                    -4370.8531              133.6327              9.4493
+G solv                   -3295.1532              109.7183              7.7583
+
+TOTAL                    -7666.0063               52.2407              3.6940
+
+
+Ligand:
+Energy Component            Average              Std. Dev.   Std. Err. of Mean
+-------------------------------------------------------------------------------
+BOND                         9.4858                2.4766              0.1751
+ANGLE                       22.4855                3.5493              0.2510
+DIHED                        9.9784                2.8897              0.2043
+VDWAALS                     -4.4077                1.1077              0.0783
+EEL                         -8.3343                2.2245              0.1573
+1-4 VDW                     13.9054                1.2099              0.0856
+1-4 EEL                     66.3206                1.5491              0.1095
+EGB                        -63.6627                1.1179              0.0790
+ESURF                        3.1992                0.0216              0.0015
+
+G gas                      109.4337                4.9131              0.3474
+G solv                     -60.4635                1.1183              0.0791
+
+TOTAL                       48.9702                4.7770              0.3378
+
+
+Differences (Complex - Receptor - Ligand):
+Energy Component            Average              Std. Dev.   Std. Err. of Mean
+-------------------------------------------------------------------------------
+BOND                        -0.0000                0.0000              0.0000
+ANGLE                       -0.0000                0.0000              0.0000
+DIHED                       -0.0000                0.0000              0.0000
+VDWAALS                    -44.3830                3.1919              0.2257
+EEL                         66.5654               10.6323              0.7518
+1-4 VDW                      0.0000                0.0001              0.0000
+1-4 EEL                      0.0000                0.0001              0.0000
+EGB                        -53.6181               10.0761              0.7125
+ESURF                       -5.0840                0.3456              0.0244
+
+DELTA G gas                 22.1824               11.8204              0.8358
+DELTA G solv               -58.7021                9.9447              0.7032
+
+DELTA TOTAL                -36.5197                3.8237              0.2704
+
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------

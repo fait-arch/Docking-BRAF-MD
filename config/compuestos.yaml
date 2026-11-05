@@ -1,0 +1,88 @@
+# =============================================================================
+#  Registro de sistemas simulados.
+#
+#  Los scripts de simulación son los mismos para todos (simulaciones/scripts);
+#  lo único que cambia por sistema está aquí. Añadir uno nuevo es copiar un
+#  bloque, poner sus PDB en Data/ y preparar el sistema.
+#
+#  `dmlrun compuestos` lista lo registrado y qué corridas tiene cada uno.
+#
+#  Dos claves de ruta, porque en este repositorio las entradas y los resultados
+#  viven separados:
+#    directorio             entradas: scripts/, sistema/ (lo que se versiona)
+#    directorio_resultados  salidas de las corridas de 50 ns ya hechas
+#                           (md_50ns/, analisis_50ns/, resultados_50ns/)
+# =============================================================================
+version: 1
+
+defaults:
+  receptor_residuos: "448-723"        # recorte del dominio quinasa de BRAF
+  ph: 7.4
+  ligando_resname: LIG
+  carga_ligando: 0
+  exhaustiveness: 100
+  caja_vina: [20.0, 20.0, 20.0]
+  # Residuos que definen el centro del bolsillo de ATP (sitio de unión).
+  bolsillo_residuos: [463, 471, 481, 483, 505, 514, 529, 531, 532, 583, 594]
+  caja_solvatacion: 12.0              # distancia soluto-borde (Å)
+  sal_molar: 0.15
+
+compuestos:
+
+  macaridine:
+    nombre: Macaridine
+    pubchem: 94717379
+    directorio: simulaciones/Macaridine_94717379
+    directorio_resultados: resultados_50ns/Macaridine_94717379
+    titulo: "Macaridine (94717379) – BRAF V600E"
+    receptor: Macaridine94717379_receptor.pdb
+    ligando: Macaridine94717379_ligand.pdb
+    smiles: "O=CC1=C(Cc2ccccc2)CN(O)C=C1"
+    carga_ligando: 0
+
+  # Forma neutra. La corrida de 50 ns se abandonó al comprobar que a pH 7.4 la
+  # amina terciaria está protonada; se conserva como registro del intento.
+  pallidine:
+    nombre: Pallidine
+    pubchem: 24543347
+    directorio: simulaciones/Pallidine_24543347
+    directorio_resultados: resultados_50ns/Pallidine_24543347
+    titulo: "Pallidine (24543347) – BRAF V600E"
+    receptor: Pallidine24543347_receptor.pdb
+    ligando: Pallidine24543347_ligand.pdb
+    smiles: "COC1=C[C@@]23CCN(C)[C@@H](Cc4cc(O)c(OC)cc42)C3=CC1=O"
+    carga_ligando: 0
+
+  # Forma catiónica, la relevante a pH 7.4: es la corrida de 50 ns válida.
+  pallidine_protonada:
+    nombre: Pallidine protonada
+    pubchem: 24543347
+    directorio: simulaciones/Pallidine_24543347_protonada
+    directorio_resultados: resultados_50ns/Pallidine_24543347_protonada
+    titulo: "Pallidine protonada (24543347, +1) – BRAF V600E"
+    receptor: Pallidine24543347_receptor.pdb
+    ligando: Pallidine24543347_ligand.pdb
+    smiles: "COC1=C[C@@]23CC[NH+](C)[C@@H](Cc4cc(O)c(OC)cc42)C3=CC1=O"
+    carga_ligando: 1
+
+# -----------------------------------------------------------------------------
+#  Tiempos de simulación predefinidos. --tiempo acepta cualquier valor en ns;
+#  estos son los atajos y sus parámetros derivados.
+# -----------------------------------------------------------------------------
+tiempos:
+  prueba:                 # equivale a --tiempo 0.1
+    ns: 0.1
+    t_calentamiento_ps: 20
+    t_equilibrado_ps: 20
+    segmentos: 4
+    guardar_cada_ps: 1
+    frames_mmgbsa: 50
+  10ns:
+    ns: 10
+    segmentos: 2
+  20ns:
+    ns: 20
+    segmentos: 4
+  50ns:
+    ns: 50
+    segmentos: 10

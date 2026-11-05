@@ -1,0 +1,11 @@
+Scripts que generaron las figuras fig50_*.pdf/png y los valores de la sección 8 de simulacion.tex.
+Se ejecutaron en el entorno md-braf (environment.yml del repositorio) y, para render.py, en un entorno con PyMOL.
+Las rutas de entrada están fijadas al equipo donde se corrió el análisis: ajustarlas antes de reutilizarlos.
+
+  analisis_extra.py   validación de la trayectoria, puentes de H, contactos por bloque, distancias, DSSP y SASA
+                      (uso: python analisis_extra.py --tray <trayectorias_50ns/Compuesto> --out <salida>)
+  mmgbsa_tiempo.py    MM/GBSA por fotograma, por segmento y descomposición por bloques de 10 ns
+                      (uso: python mmgbsa_tiempo.py --mmgbsa <analisis_50ns/mmgbsa> --out <salida>)
+  cpptraj_kmeans_*.in agrupamiento k-means (k = 2-5) sobre Cα y sobre la pose del ligando (cpptraj -i archivo.in)
+  figuras_50ns.py     figuras comparativas fig50_*
+  render.py           paneles 3D del sitio de unión (pymol -cq render.py)

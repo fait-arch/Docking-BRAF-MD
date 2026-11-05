@@ -1,0 +1,20 @@
+parm /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/sistema/complejo_seco.prmtop
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_001.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_002.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_003.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_004.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_005.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_006.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_007.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_008.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_009.dcd
+trajin /mnt/user-data/uploads/Github/Docking-BRAF-MD/trayectorias_50ns/Macaridine_94717379/md_50ns/04_prod_010.dcd
+rms ajuste first @CA
+cluster c2 kmeans clusters 2 randompoint kseed 1234 maxit 1000 rms @CA sieve 10 random sieveseed 1234 out M/cnum_2.dat summary M/summary_2.dat info M/info_2.dat cpopvtime M/pop_2.dat normframe repout M/rep_2 repfmt pdb
+cluster c3 kmeans clusters 3 randompoint kseed 1234 maxit 1000 rms @CA sieve 10 random sieveseed 1234 out M/cnum_3.dat summary M/summary_3.dat info M/info_3.dat cpopvtime M/pop_3.dat normframe repout M/rep_3 repfmt pdb
+cluster c4 kmeans clusters 4 randompoint kseed 1234 maxit 1000 rms @CA sieve 10 random sieveseed 1234 out M/cnum_4.dat summary M/summary_4.dat info M/info_4.dat cpopvtime M/pop_4.dat normframe repout M/rep_4 repfmt pdb
+cluster c5 kmeans clusters 5 randompoint kseed 1234 maxit 1000 rms @CA sieve 10 random sieveseed 1234 out M/cnum_5.dat summary M/summary_5.dat info M/info_5.dat cpopvtime M/pop_5.dat normframe repout M/rep_5 repfmt pdb
+cluster L2 kmeans clusters 2 randompoint kseed 1234 maxit 1000 rms :LIG&!@H= nofit sieve 10 random sieveseed 1234 out M/Lcnum_2.dat summary M/Lsummary_2.dat info M/Linfo_2.dat cpopvtime M/Lpop_2.dat normframe repout M/Lrep_2 repfmt pdb
+cluster L3 kmeans clusters 3 randompoint kseed 1234 maxit 1000 rms :LIG&!@H= nofit sieve 10 random sieveseed 1234 out M/Lcnum_3.dat summary M/Lsummary_3.dat info M/Linfo_3.dat cpopvtime M/Lpop_3.dat normframe repout M/Lrep_3 repfmt pdb
+cluster L4 kmeans clusters 4 randompoint kseed 1234 maxit 1000 rms :LIG&!@H= nofit sieve 10 random sieveseed 1234 out M/Lcnum_4.dat summary M/Lsummary_4.dat info M/Linfo_4.dat cpopvtime M/Lpop_4.dat normframe repout M/Lrep_4 repfmt pdb
+run

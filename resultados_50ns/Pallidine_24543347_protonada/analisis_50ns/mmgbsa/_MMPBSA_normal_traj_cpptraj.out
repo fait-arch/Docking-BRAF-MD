@@ -1,0 +1,235 @@
+
+CPPTRAJ: Trajectory Analysis. V7.6.2 (AmberTools)
+    ___  ___  ___  ___
+     | \/ | \/ | \/ | 
+    _|_/\_|_/\_|_/\_|_
+
+| Date/time: 10/27/26 21:25:31
+| Available memory: 3.077 GB
+
+	Reading 'com.prmtop' as Amber Topology
+	Radius Set: H(N)-modified Bondi radii (mbondi2)
+INPUT: Reading input from 'STDIN'
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_001.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_001.dcd' as Charmm DCD
+	NAMD unit cell detected.
+Warning: Trajectory box type is 'Truncated octahedron' but topology box type is 'None'.
+Warning: Setting topology box information from trajectory.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_002.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_002.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_003.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_003.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_004.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_004.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_005.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_005.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_006.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_006.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_007.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_007.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_008.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_008.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_009.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_009.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [trajin /home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_010.dcd 1 476 25]
+	Reading '/home/lasinac/Escritorio/Ronie/Docking-BRAF-MD/simulaciones/Pallidine_24543347_protonada/md_50ns/04_prod_010.dcd' as Charmm DCD
+	NAMD unit cell detected.
+  [noprogress]
+	Progress bar will not be used during Run.
+  [rmsd !(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL) mass first]
+    RMSD: (!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)), reference is first frame (!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)), mass-weighted.
+	Best-fit RMSD will be calculated, coords will be rotated and translated.
+  [outtraj _MMPBSA_complex.pdb onlyframes 1 nobox pdb]
+	Saving frames 1
+	Writing '_MMPBSA_complex.pdb' as PDB
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [outtraj _MMPBSA_dummycomplex.inpcrd onlyframes 1 nobox restart]
+	Saving frames 1
+	Writing '_MMPBSA_dummycomplex.inpcrd' as Amber Restart
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [outtraj _MMPBSA_complex.mdcrd.0 onlyframes 1-201 nobox]
+Warning: Format not specified and extension '.0' not recognized. Defaulting to Amber Trajectory.
+	Saving frames 1-201
+	Writing '_MMPBSA_complex.mdcrd.0' as Amber Trajectory
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [strip :277]
+    STRIP: Stripping atoms in mask [:277]
+  [outtraj _MMPBSA_receptor.pdb onlyframes 1 nobox pdb]
+	Saving frames 1
+	Writing '_MMPBSA_receptor.pdb' as PDB
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [outtraj _MMPBSA_dummyreceptor.inpcrd onlyframes 1 nobox restart]
+	Saving frames 1
+	Writing '_MMPBSA_dummyreceptor.inpcrd' as Amber Restart
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [outtraj _MMPBSA_receptor.mdcrd.0 onlyframes 1-201 nobox]
+Warning: Format not specified and extension '.0' not recognized. Defaulting to Amber Trajectory.
+	Saving frames 1-201
+	Writing '_MMPBSA_receptor.mdcrd.0' as Amber Trajectory
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [unstrip]
+  [rmsd !(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL) mass first]
+    RMSD: (!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)), reference is first frame (!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)), mass-weighted.
+	Best-fit RMSD will be calculated, coords will be rotated and translated.
+  [strip :1-276]
+    STRIP: Stripping atoms in mask [:1-276]
+  [outtraj _MMPBSA_ligand.pdb onlyframes 1 nobox pdb]
+	Saving frames 1
+	Writing '_MMPBSA_ligand.pdb' as PDB
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [outtraj _MMPBSA_dummyligand.inpcrd onlyframes 1 nobox restart]
+	Saving frames 1
+	Writing '_MMPBSA_dummyligand.inpcrd' as Amber Restart
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [outtraj _MMPBSA_ligand.mdcrd.0 onlyframes 1-201 nobox]
+Warning: Format not specified and extension '.0' not recognized. Defaulting to Amber Trajectory.
+	Saving frames 1-201
+	Writing '_MMPBSA_ligand.mdcrd.0' as Amber Trajectory
+    OUTTRAJ: Writing frames associated with topology 'com.prmtop'
+  [unstrip]
+  [rmsd !(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL) mass first]
+    RMSD: (!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)), reference is first frame (!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)), mass-weighted.
+	Best-fit RMSD will be calculated, coords will be rotated and translated.
+---------- RUN BEGIN -------------------------------------------------
+
+PARAMETER FILES (1 total):
+ 0: com.prmtop, 4505 atoms, 277 res, box: Truncated octahedron, 2 mol
+
+INPUT TRAJECTORIES (10 total):
+ 0: '04_prod_001.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 1: '04_prod_002.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 2: '04_prod_003.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 3: '04_prod_004.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 4: '04_prod_005.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 5: '04_prod_006.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 6: '04_prod_007.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 7: '04_prod_008.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 8: '04_prod_009.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+ 9: '04_prod_010.dcd' is a CHARMM DCD file (coords) Little Endian 32 bit, Parm com.prmtop (Truncated octahedron box) (reading 20 of 500)
+  Coordinate processing will occur on 200 frames.
+
+BEGIN TRAJECTORY PROCESSING:
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+.....................................................
+ACTION SETUP FOR PARM 'com.prmtop' (16 actions):
+  0: [rmsd !(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL) mass first]
+	Target mask: [!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)](4505)
+	Reference topology: com.prmtop
+	Reference mask: [!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)](4505)
+  1: [outtraj _MMPBSA_complex.pdb onlyframes 1 nobox pdb]
+        '_MMPBSA_complex.pdb' is a PDB file, Parm com.prmtop no box info,: Writing frames 1
+	Has coordinates, time
+  2: [outtraj _MMPBSA_dummycomplex.inpcrd onlyframes 1 nobox restart]
+        '_MMPBSA_dummycomplex.inpcrd' is an AMBER restart file, Parm com.prmtop no box info,: Writing frames 1
+	Has coordinates, time
+  3: [outtraj _MMPBSA_complex.mdcrd.0 onlyframes 1-201 nobox]
+        '_MMPBSA_complex.mdcrd.0' is an AMBER trajectory, Parm com.prmtop no box info,: Writing frames 1-201
+	Has coordinates, time
+  4: [strip :277]
+	Stripping 46 atoms.
+	Stripped topology: 4459 atoms, 276 res, box: Truncated octahedron, 1 mol
+  5: [outtraj _MMPBSA_receptor.pdb onlyframes 1 nobox pdb]
+        '_MMPBSA_receptor.pdb' is a PDB file, Parm com.prmtop no box info,: Writing frames 1
+	Has coordinates, time
+  6: [outtraj _MMPBSA_dummyreceptor.inpcrd onlyframes 1 nobox restart]
+        '_MMPBSA_dummyreceptor.inpcrd' is an AMBER restart file, Parm com.prmtop no box info,: Writing frames 1
+	Has coordinates, time
+  7: [outtraj _MMPBSA_receptor.mdcrd.0 onlyframes 1-201 nobox]
+        '_MMPBSA_receptor.mdcrd.0' is an AMBER trajectory, Parm com.prmtop no box info,: Writing frames 1-201
+	Has coordinates, time
+  8: [unstrip]
+  9: [rmsd !(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL) mass first]
+	Target mask: [!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)](4505)
+	Reference topology: com.prmtop
+	Reference mask: [!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)](4505)
+  10: [strip :1-276]
+	Stripping 4459 atoms.
+	Stripped topology: 46 atoms, 1 res, box: Truncated octahedron, 1 mol
+  11: [outtraj _MMPBSA_ligand.pdb onlyframes 1 nobox pdb]
+        '_MMPBSA_ligand.pdb' is a PDB file, Parm com.prmtop no box info,: Writing frames 1
+	Has coordinates, time
+  12: [outtraj _MMPBSA_dummyligand.inpcrd onlyframes 1 nobox restart]
+        '_MMPBSA_dummyligand.inpcrd' is an AMBER restart file, Parm com.prmtop no box info,: Writing frames 1
+	Has coordinates, time
+  13: [outtraj _MMPBSA_ligand.mdcrd.0 onlyframes 1-201 nobox]
+        '_MMPBSA_ligand.mdcrd.0' is an AMBER trajectory, Parm com.prmtop no box info,: Writing frames 1-201
+	Has coordinates, time
+  14: [unstrip]
+  15: [rmsd !(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL) mass first]
+	Target mask: [!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)](4505)
+	Reference topology: com.prmtop
+	Reference mask: [!(:WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL)](4505)
+----- 04_prod_001.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_002.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_003.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_004.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_005.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_006.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_007.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_008.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_009.dcd (1-476, 25) -----
+
+Warning: CHARMM version is >= 22 but an option other than 'shape' was specified.
+----- 04_prod_010.dcd (1-476, 25) -----
+
+Read 200 frames and processed 200 frames.
+TIME: Avg. throughput= 317.8897 frames / second.
+
+ACTION OUTPUT:
+    OUTTRAJ: '_MMPBSA_complex.pdb': Wrote 1 frames.
+    OUTTRAJ: '_MMPBSA_dummycomplex.inpcrd': Wrote 1 frames.
+    OUTTRAJ: '_MMPBSA_complex.mdcrd.0': Wrote 200 frames.
+    OUTTRAJ: '_MMPBSA_receptor.pdb': Wrote 1 frames.
+    OUTTRAJ: '_MMPBSA_dummyreceptor.inpcrd': Wrote 1 frames.
+    OUTTRAJ: '_MMPBSA_receptor.mdcrd.0': Wrote 200 frames.
+    OUTTRAJ: '_MMPBSA_ligand.pdb': Wrote 1 frames.
+    OUTTRAJ: '_MMPBSA_dummyligand.inpcrd': Wrote 1 frames.
+    OUTTRAJ: '_MMPBSA_ligand.mdcrd.0': Wrote 200 frames.
+TIME: Analyses took 0.0000 seconds.
+
+DATASETS (3 total):
+	RMSD_00001 "RMSD_00001" (double, rms), size is 200 (1.600 kB)
+	RMSD_00002 "RMSD_00002" (double, rms), size is 200 (1.600 kB)
+	RMSD_00003 "RMSD_00003" (double, rms), size is 200 (1.600 kB)
+    Total data set memory usage is at least 4.800 kB
+
+RUN TIMING:
+TIME:		Init               : 0.0000 s (  0.00%)
+TIME:		Trajectory Process : 0.6291 s ( 99.95%)
+TIME:		Action Post        : 0.0000 s (  0.00%)
+TIME:		Analysis           : 0.0000 s (  0.00%)
+TIME:		Data File Write    : 0.0000 s (  0.00%)
+TIME:		Other              : 0.0003 s (  0.00%)
+TIME:	Run Total 0.6295 s
+---------- RUN END ---------------------------------------------------
+TIME: Total execution time: 0.6343 seconds.
+--------------------------------------------------------------------------------
+To cite CPPTRAJ use:
+Daniel R. Roe and Thomas E. Cheatham, III, "PTRAJ and CPPTRAJ: Software for
+  Processing and Analysis of Molecular Dynamics Trajectory Data". J. Chem.
+  Theory Comput., 2013, 9 (7), pp 3084-3095.
+

@@ -4,31 +4,67 @@
 sitio de ATP de la quinasa **BRAF V600E**, siguiendo el protocolo de la sección 2.1.3 de
 *RSC Adv.* 2022, **12**, 30181 (Singh *et al.*).
 
-Este repositorio contiene **solo el programa y los datos de entrada**. Las trayectorias, los análisis y las
-figuras **no** se versionan: se generan al correr los scripts (ver `.gitignore`).
+El repositorio contiene **el programa, los datos de entrada y el reporte**. Las trayectorias y los análisis
+pesados no se versionan: se generan al correr los pipelines (ver `.gitignore`).
 
-| Compuesto | PubChem CID | Carpeta |
-|---|---|---|
-| Macaridine | 94717379 | `simulaciones/Macaridine_94717379/` |
-| Pallidine | 24543347 | `simulaciones/Pallidine_24543347/` |
+| Sistema | Clave para la CLI | PubChem CID | Carga del ligando | 50 ns |
+|---|---|---|---|---|
+| Macaridine | `macaridine` | 94717379 | 0 | sí |
+| Pallidine (neutra) | `pallidine` | 24543347 | 0 | abandonada |
+| Pallidine protonada | `pallidine_protonada` | 24543347 | +1 | sí |
 
-## Estructura
+La forma neutra de Pallidine se abandonó al comprobar que a pH 7.4 su amina terciaria está protonada; la
+corrida válida es la de `pallidine_protonada`. El registro del intento se conserva para documentarlo.
 
+---
+
+## Cómo se ejecuta: una sola CLI, un parámetro por PC
+
+Todo se lanza y se consulta con `dmlrun`. **Lo único que cambia entre máquinas es `--servidor`**: el gestor
+de colas, los recursos, el entorno y la plataforma de OpenMM salen de `config/servidores.yaml`, así que no
+hay que editar código ni scripts al cambiar de equipo.
+
+```bash
+dmlrun servidores      # perfiles de PC disponibles
+dmlrun compuestos      # sistemas registrados y qué corridas tiene cada uno
+dmlrun config --servidor hpc    # comprueba, en esta máquina, que exista lo que el perfil pide
+dmlrun run             # lanza
+dmlrun status          # estado y progreso real
+dmlrun logs --id <id>  # log de una corrida
+dmlrun reporte         # informe HTML, o secciones LaTeX dentro del paper
 ```
-Data/                              entradas originales (receptor SWISS-MODEL + ligando SwissParam)
-environment.yml                    entorno conda/micromamba (md-braf)
-simulaciones/<Compuesto_CID>/
-    scripts/                       01 preparar · 02 dinámica · 03 RMSD · 04 análisis · 05 MM/GBSA
-                                   benchmark.py · correr_50ns.sh · figuras_pymol.pml
-    sistema/                       sistema AMBER ya preparado (topología, coordenadas, ligando GAFF, poses de Vina)
-    entrada/                       (Pallidine) copia de las entradas de Data/
-    README.md                      detalles y resultados de la prueba rápida de ese compuesto
+
+### Perfiles de PC
+
+| `--servidor` | Dónde | Cola | Recursos |
+|---|---|---|---|
+| `hpc` | HPC CEDIA | Slurm, partición `interactive` | 1 GPU MIG 10 GB, 4 núcleos, 16 GB, 16 h |
+| `hpc-cpu` | HPC CEDIA | Slurm | 16 núcleos, 48 GB, 24 h, sin GPU |
+| `linux-gpu` | Servidor Linux externo | ninguna (`setsid`) | GPU NVIDIA |
+| `linux-cpu` | Servidor Linux externo | ninguna (`setsid`) | solo CPU |
+| `portatil` | Portátil con RTX 3060 | ninguna | ~135 ns/día |
+| `actual` | Aquí mismo, entorno ya activo | ninguna | pruebas cortas y figuras |
+
+`--servidor auto` elige solo: respeta `$DMLRUN_SERVIDOR`, luego un perfil que se llame como el *hostname*,
+luego el primero de Slurm si existe `sbatch`, y si no uno que ejecute en local.
+
+**Añadir una PC** es copiar un bloque en `config/servidores.yaml` y ya se puede usar su nombre:
+
+```yaml
+  mi-servidor:
+    descripcion: "Servidor del laboratorio"
+    scheduler: local            # local | slurm
+    cpus: 16
+    memoria_gb: 64
+    gpus: 1
+    plataforma_openmm: CUDA
+    conda_env: md-braf
+    gestor_entorno: micromamba
+    pre_comandos:
+      - 'eval "$(micromamba shell hook -s bash)"'
 ```
 
-`sistema/` es la **entrada de la dinámica**: lo genera `01_preparar_sistema.py` (recorte 448–723,
-protonación a pH 7.4, *docking* con Vina, parámetros GAFF/AM1-BCC, caja TIP3P y NaCl 0.15 M). Se incluye para
-que cualquier PC simule exactamente el mismo sistema, sin repetir el *docking*. Si se regenera, Vina puede
-dar una pose algo distinta según la versión y el equipo.
+---
 
 ## Instalación (una vez por PC)
 
@@ -40,8 +76,13 @@ git clone https://github.com/fait-arch/Docking-BRAF-MD.git
 cd Docking-BRAF-MD
 micromamba create -f environment.yml
 micromamba activate md-braf
-python -m openmm.testInstallation                   # con GPU NVIDIA debe aparecer CUDA sin error
+pip install -e .                                     # deja disponible el comando dmlrun
+python -m openmm.testInstallation                    # con GPU NVIDIA debe aparecer CUDA sin error
+
+dmlrun config --servidor <perfil-de-esta-pc>         # comprueba el entorno antes de lanzar nada
 ```
+
+Sin `pip install -e .` todo funciona igual escribiendo `python -m dmlrun.cli` en lugar de `dmlrun`.
 
 Si CUDA da `CUDA_ERROR_UNSUPPORTED_PTX_VERSION`, el entorno trae un CUDA más nuevo que el driver. Fijarlo a
 la versión que muestra `nvidia-smi`, por ejemplo `micromamba install -c conda-forge "cuda-version=13.2"`.
@@ -54,78 +95,264 @@ Usar el entorno alternativo, con OpenMM 8.2 (misma física; los scripts funciona
 ```bash
 micromamba create -f environment-cuda12.yml      # trae cuda-version=12.2; cambiarlo si nvidia-smi dice otro
 micromamba activate md-braf
+pip install -e .
 python -m openmm.testInstallation                # CUDA debe salir sin error
 ```
 
-En el HPC de CEDIA (A100 en particiones MIG, driver 535 = CUDA 12.2), el escritorio interactivo
-*NVIDIA DeepOps Desktop* funciona con: 1 GPU de 10 GB, 4 núcleos, 16 GB de RAM, 16 h e *idle timeout*
-de 57600 s. Dentro de la sesión, lanzar la corrida con `nohup` para poder cerrar el visor:
+En el HPC de CEDIA (A100 en particiones MIG, driver 535 = CUDA 12.2) el escritorio interactivo
+*NVIDIA DeepOps Desktop* funciona con 1 GPU de 10 GB, 4 núcleos, 16 GB de RAM, 16 h e *idle timeout* de
+57600 s. Es exactamente lo que pide el perfil `hpc`.
 
-```bash
-cd simulaciones/<Compuesto_CID>/scripts
-python 02_dinamica.py --sistema ../sistema --out ../md_prueba --etapas min
-REUSAR_MIN=1 nohup bash correr_50ns.sh > corrida_50ns.log 2>&1 &
-tail -f corrida_50ns.log
-```
+---
 
-## Correr una simulación
+## Las entradas
 
-Desde la carpeta `scripts/` del compuesto, con el entorno activo:
+Hay tres niveles de entrada, de lo más general a lo más específico:
 
-```bash
-cd simulaciones/Pallidine_24543347/scripts
+| Qué | Dónde | Quién lo usa |
+|---|---|---|
+| PDB originales del receptor y del ligando | `Data/<Nombre><CID>_{receptor,ligand}.pdb` | la etapa `sistema` |
+| Metadatos del compuesto (SMILES, carga, título, bolsillo) | `config/compuestos.yaml` | toda la CLI |
+| Sistema AMBER ya preparado | `simulaciones/<Sistema>/sistema/` | la dinámica |
 
-# velocidad esperada: minimizar una vez (unos minutos) y medir
-python 02_dinamica.py --sistema ../sistema --out ../md_prueba --etapas min
-python benchmark.py --sistema ../sistema --estado ../md_prueba/01_min.xml --pasos 2000
+`sistema/` es **la entrada real de la dinámica**: lo genera `01_preparar_sistema.py` (recorte 448–723,
+protonación a pH 7.4, *docking* con Vina, parámetros GAFF/AM1-BCC, caja TIP3P y NaCl 0.15 M) y se versiona
+para que cualquier PC simule exactamente el mismo sistema sin repetir el *docking*. Si se regenera, Vina
+puede dar una pose algo distinta según la versión y el equipo.
 
-# 50 ns: minimización, 0.5 ns de calentamiento, 0.5 ns de equilibrado, 50 ns de producción,
-# RMSD, análisis completo y MM/GBSA (200 fotogramas). Reanudable: si se corta, relanzar igual.
-# REUSAR_MIN=1 aprovecha la minimización de md_prueba/ si ya existe.
-REUSAR_MIN=1 systemd-inhibit --what=sleep:idle bash correr_50ns.sh
+Lo que distingue a un sistema de otro está en `config/compuestos.yaml`, no en los scripts: el SMILES, la
+**carga del ligando** (0 para la forma neutra, +1 para la protonada), el título de las figuras y los residuos
+que definen el centro del bolsillo. Los scripts de `simulaciones/scripts/` son los mismos para todos.
 
-# otras duraciones:  T_PROD_PS=100000 NOMBRE=100ns bash correr_50ns.sh
-```
+> **Falta por versionar.** `simulaciones/Pallidine_24543347_protonada/sistema/` no está en el repositorio,
+> aunque es el sistema que produjo la corrida de 50 ns usada en el reporte. Hasta que se añada, esa corrida
+> no es reproducible desde cero en otra PC. Se regenera con:
+> ```bash
+> dmlrun run --pipeline resultados --compuesto pallidine_protonada \
+>        --tiempo 50 --etapas sistema --servidor actual
+> ```
+> La carga +1 ya está declarada en `config/compuestos.yaml`, así que no hay que pasarla a mano.
 
-Prueba rápida (20 ps + 20 ps + 100 ps, la del reporte):
-
-```bash
-python 02_dinamica.py --sistema ../sistema --out ../md_prueba \
-       --t-calentamiento 20 --t-equilibrado 20 --t-produccion 100 --segmentos 4 --guardar-cada 1
-python 03_rmsd.py --sistema ../sistema --md ../md_prueba --out ../resultados_prueba
-```
-
-Los resultados quedan en `md_*/`, `analisis_*/` y `resultados_*/` dentro de la carpeta del compuesto,
-ignorados por git. Velocidad de referencia con ~49 000 átomos: ~0.8 ns/día con 2 CPU y ~135 ns/día con una
-RTX 3060 de portátil (CUDA). Con GPU, 50 ns tardan unas 9 h por compuesto, más el análisis.
-
-## Añadir un compuesto
+### Añadir un compuesto
 
 1. Poner `<Nombre><CID>_ligand.pdb` y `<Nombre><CID>_receptor.pdb` en `Data/`.
-2. Copiar `simulaciones/Pallidine_24543347/` como `simulaciones/<Nombre>_<CID>/` y borrar su `sistema/` y
-   `entrada/`. Sus scripts leen el SMILES del ligando de `sistema/sistema_info.json`; los de Macaridine lo tienen fijo.
-3. Cambiar el nombre del compuesto en `03_rmsd.py` (`--titulo`) y en `correr_50ns.sh`.
-4. Preparar el sistema:
-   ```bash
-   python 01_preparar_sistema.py --receptor ../../../Data/<Nombre><CID>_receptor.pdb \
-          --ligando ../../../Data/<Nombre><CID>_ligand.pdb --out ../sistema
+2. Añadir un bloque en `config/compuestos.yaml`:
+   ```yaml
+     mi_compuesto:
+       nombre: MiCompuesto
+       pubchem: 12345678
+       directorio: simulaciones/MiCompuesto_12345678
+       directorio_resultados: resultados_50ns/MiCompuesto_12345678
+       titulo: "MiCompuesto (12345678) – BRAF V600E"
+       receptor: MiCompuesto12345678_receptor.pdb
+       ligando: MiCompuesto12345678_ligand.pdb
+       smiles: "..."
+       carga_ligando: 0          # +1 si tiene una amina protonada a pH 7.4
    ```
-   Revisar la carga del ligando (`--carga-ligando`): por ejemplo, una amina protonada a pH 7.4 es +1.
+3. Preparar el sistema y lanzar:
+   ```bash
+   dmlrun run --pipeline resultados --compuesto mi_compuesto --tiempo 50 \
+          --etapas sistema --servidor actual
+   dmlrun run --pipeline resultados --compuesto mi_compuesto --tiempo 50 --servidor hpc
+   ```
 
-## Trabajar desde otra PC
+No hay que copiar scripts ni editar ninguno: antes había que cambiar el nombre a mano en `03_rmsd.py` y en
+`correr_50ns.sh`, y ya no.
+
+---
+
+## Los dos pipelines
+
+### `--pipeline resultados` — dinámica tradicional
+
+Etapas: `sistema`, `min`, `cal`, `eq`, `prod`, `rmsd`, `analisis`, `mmgbsa`.
+
+```bash
+# los dos sistemas, 50 ns, en la HPC
+dmlrun run --pipeline resultados --compuesto todos --tiempo 50 --servidor hpc
+
+# ver el plan y el sbatch sin enviar nada
+dmlrun run --pipeline resultados --compuesto todos --tiempo 50 --servidor hpc --dry-run
+dmlrun run --pipeline resultados --compuesto macaridine --tiempo 50 --servidor hpc \
+       --dry-run --mostrar-script
+
+# trabajos más cortos: como máximo 2 segmentos de producción por envío
+dmlrun run --pipeline resultados --compuesto macaridine --tiempo 50 \
+       --etapas prod --max-segmentos 2 --servidor hpc
+
+# análisis y MM/GBSA sin gastar cuota de GPU
+dmlrun run --pipeline resultados --compuesto todos --tiempo 50 \
+       --etapas rmsd,analisis,mmgbsa --servidor hpc-cpu
+
+# prueba rápida antes de ocupar la cola (100 ps, mismo protocolo)
+dmlrun run --pipeline resultados --compuesto macaridine --tiempo prueba --servidor portatil
+```
+
+El tiempo de simulación es un parámetro, no una carpeta fija: `--tiempo 10,20,50` lanza las tres y cada una
+queda en `runs/<tiempo>/` sin pisar a las otras.
+
+### `--pipeline ml` — docking y rescoring con aprendizaje automático
+
+Etapas: `centro`, `docking`, `complejos`, `features`, `rescore`.
+
+Necesita además el paquete `dockingML`, que aporta los comandos `dml-dock`, `dml-features`, `dml-train` y
+`dml-rescore`:
+
+```bash
+pip install -e /ruta/a/dockingML
+```
+
+```bash
+# sobre las poses acopladas: no depende de la dinámica
+dmlrun run --pipeline ml --compuesto todos --tiempo 50 --fuente docking --servidor hpc-cpu
+
+# sobre fotogramas de la trayectoria de 50 ns
+dmlrun run --pipeline ml --compuesto todos --tiempo 50 --fuente md --frames-ml 20 --servidor hpc-cpu
+
+# con un modelo entrenado
+dmlrun run --pipeline ml --compuesto todos --tiempo 50 \
+       --fuente docking --modelo modelos/rescorer.pkl --servidor hpc-cpu
+```
+
+El rescoring necesita un modelo entrenado con afinidades conocidas frente a BRAF (por ejemplo de ChEMBL);
+sin él, el pipeline deja los descriptores calculados en `features.csv` y no puntúa.
+
+---
+
+## Seguimiento
+
+```bash
+dmlrun status                       # últimas corridas, con el progreso real
+dmlrun status --compuesto macaridine
+dmlrun logs --id <id> -f            # log en vivo
+dmlrun cancel --id <id>
+dmlrun comparar --compuesto todos   # qué hay calculado de cada sistema y tiempo
+```
+
+La columna **progreso** se lee del disco (`producción 7/10` cuenta los segmentos terminados), no del gestor
+de colas, así que sigue siendo correcta aunque Slurm haya matado el trabajo por tiempo.
+
+Los envíos son **reanudables**: `dmlrun run` omite las etapas que ya tienen salida. Si una corrida se corta,
+se relanza el mismo comando y continúa donde estaba. `--forzar` repite todo.
+
+---
+
+## El reporte
+
+El reporte LaTeX vive ahora en `paper/simulacion.tex`, con sus figuras en `paper/Img/`.
+
+```bash
+cd paper && latexmk -pdf simulacion.tex
+```
+
+Las secciones con cifras se generan de los datos, no se copian a mano:
+
+```bash
+dmlrun reporte --formato tex          # escribe dentro de paper/simulacion.tex
+dmlrun reporte                        # informe HTML autocontenido en reportes/
+```
+
+`--formato tex` **solo reemplaza lo que hay entre sus propias marcas**
+`% <<<dmlrun:...>>> ... % <<<dmlrun:fin:...>>>`, y guarda una copia `.bak` antes de escribir: la redacción
+del documento no se toca. Si las marcas no existen, se insertan una vez antes del apéndice; moverlas de
+sitio cambia dónde aparecen las secciones. Genera dos bloques:
+
+- **`datos_50ns`** — tablas de estabilidad, energías y descomposición del MM/GBSA, leídas de
+  `resumen.json` y `FINAL_MMGBSA.dat`, de modo que no pueden desfasarse del análisis.
+- **`comparacion_md_ml`** — la comparación entre la vía tradicional (docking + 50 ns + MM/GBSA) y la de
+  aprendizaje automático (docking + rescoring) sobre los mismos compuestos.
+
+El informe HTML lleva las imágenes incrustadas y cada figura con qué muestra y qué hay que mirar en ella;
+sirve para pasárselo a alguien que no lanzó la simulación.
+
+---
+
+## Reproducibilidad entre PC
+
+Cada envío escribe `runs/<tiempo>/estado/manifest.json` con la **huella** de los parámetros científicos
+(compuesto, SMILES, carga, pH, residuos, tiempo, segmentos y semilla), el commit de git y las versiones de
+OpenMM, MDAnalysis, RDKit y demás. Misma huella en dos PC = resultados comparables; cambiar el tiempo de
+simulación cambia la huella a propósito.
+
+La semilla del integrador es fija (2022) y entra en la huella. Entre plataformas distintas (CUDA frente a
+CPU, u OpenMM 8.2 frente a 8.6) las trayectorias no son idénticas bit a bit; el manifiesto deja constancia
+de con qué se calculó cada una.
+
+### Trabajar desde otra PC
 
 ```bash
 git clone https://github.com/fait-arch/Docking-BRAF-MD.git    # o: gh repo clone fait-arch/Docking-BRAF-MD
+git pull                                                      # antes de empezar, en cada PC
 # ... cambios ...
 git add -A && git commit -m "describe el cambio" && git push
 ```
 
-Para hacer `push` hay que autenticarse una vez en cada PC, con `gh auth login` o con una clave SSH. Antes de
-empezar a trabajar en una PC, `git pull` trae los cambios hechos en la otra.
+Para hacer `push` hay que autenticarse una vez en cada PC, con `gh auth login` o con una clave SSH.
+
+---
+
+## Velocidad de referencia
+
+Con ~49 000 átomos: ~0.8 ns/día con 2 CPU y ~135 ns/día con una RTX 3060 de portátil (CUDA). Con GPU, 50 ns
+tardan unas 9 h por compuesto, más el análisis. Para medirlo en una PC nueva:
+
+```bash
+dmlrun run --pipeline resultados --compuesto macaridine --tiempo prueba \
+       --etapas min --servidor <perfil>
+python simulaciones/scripts/benchmark.py --sistema simulaciones/Macaridine_94717379/sistema \
+       --estado <ruta al 01_min.xml> --pasos 2000
+```
+
+---
+
+## Problemas frecuentes
+
+**`sbatch: Requested node configuration is not available`.** Ningún nodo de la partición existe con esa
+combinación; `dmlrun` lo explica al fallar. Revisar en este orden:
+
+```bash
+scontrol show node compute-0-0 | grep -i gres    # nombre real del GRES de GPU
+sinfo -p interactive -o "%P %c %m %G"            # CPU, memoria y GPU por nodo
+scontrol show partition interactive              # límite de tiempo
+```
+
+En nodos con GPU particionada (MIG) el GRES no es `gpu:1` sino algo como `gpu:2g.10gb`. Se ajusta en
+`config/servidores.yaml`.
+
+**`micromamba: command not found` en el nodo de cómputo.** El nodo no hereda tu `.bashrc`; hay que poner la
+inicialización en `pre_comandos` del perfil.
+
+**MM/GBSA.** El número de fotogramas y el intervalo se calculan contando los que realmente hay en los `.dcd`,
+así que funciona igual si la producción quedó a medias.
+
+---
+
+## Estructura
+
+```
+Data/                              entradas originales (receptor SWISS-MODEL + ligando SwissParam)
+config/
+    servidores.yaml                perfiles de PC: cola, recursos, entorno
+    compuestos.yaml                sistemas: SMILES, carga, bolsillo, rutas
+dmlrun/                            la CLI de orquestación
+simulaciones/
+    scripts/                       01 preparar · 02 dinámica · 03 RMSD · 04 análisis
+                                   05 MM/GBSA · 06 entrada de ML · benchmark
+    <Sistema>/sistema/             sistema AMBER preparado (entrada de la dinámica)
+resultados_50ns/<Sistema>/         corridas de 50 ns: md_50ns, analisis_50ns, resultados_50ns
+trayectorias_50ns/<Sistema>/       DCD de producción y topología seca
+paper/
+    simulacion.tex                 el reporte
+    Img/                           figuras del reporte
+docs/EJECUCION.md                  guía larga de la CLI
+```
+
+---
 
 ## Notas
 
-- Las versiones usadas en el reporte son AmberTools 26, OpenMM 8.6.1, AutoDock Vina 1.2.7, RDKit 2026.03,
-  ParmEd 4.3.1, PDB2PQR 3.6–3.8 y MDAnalysis 2.10–2.11.
-- `correr_50ns.sh` genera las topologías de MM/GBSA (radios mbondi2) si no encuentra `analisis/mmgbsa/`.
-- El reporte LaTeX (`simulacion.tex`) y sus figuras no forman parte de este repositorio.
+- Versiones usadas en el reporte: AmberTools 26, OpenMM 8.6.1 (8.2 en el HPC), AutoDock Vina 1.2.7,
+  RDKit 2026.03, ParmEd 4.3.1, PDB2PQR 3.6–3.8 y MDAnalysis 2.10–2.11.
+- Los `correr_50ns.sh` de cada compuesto quedan como referencia histórica; lo que hacían lo cubre
+  `dmlrun run --pipeline resultados`, que además elige el entorno según la PC y no fija el tiempo en el
+  nombre de las carpetas.
