@@ -177,9 +177,12 @@ DIR_ENTREGAS = "resultados"
 
 
 def _nombre_entrega(compuesto, etiqueta: str) -> str:
-    """``'10ns'`` + ``'Pallidine protonada'`` -> ``'10nsPallidineProtonada'``."""
-    nombre = "".join(p[:1].upper() + p[1:] for p in compuesto.nombre.split())
-    return f"{etiqueta}{nombre}"
+    """``'10ns'`` + ``'Nothoalenic acid'`` -> ``'10nsNothoalenic acid'``.
+
+    El nombre va tal cual está en compuestos.yaml, espacios incluidos, para
+    seguir la convención de carpetas que ya usa el proyecto.
+    """
+    return f"{etiqueta}{compuesto.nombre.strip()}"
 
 
 def _carpeta_entrega(cfg, compuesto, etiqueta: str) -> Path:
