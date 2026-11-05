@@ -65,6 +65,64 @@ compuestos:
     smiles: "COC1=C[C@@]23CC[NH+](C)[C@@H](Cc4cc(O)c(OC)cc42)C3=CC1=O"
     carga_ligando: 1
 
+  # ---------------------------------------------------------------------------
+  #  Compuestos añadidos el 05/11/2026. Sin `directorio_resultados`: no tienen
+  #  corridas heredadas, así que sus resultados van a resultados/<tiempo><Nombre>.
+  #
+  #  Ninguno tiene `sistema/` preparado todavía: la etapa `sistema` (docking con
+  #  Vina + topología AMBER) se ejecutará para ellos, y necesita obabel, vina,
+  #  antechamber, parmchk2 y tleap en el entorno.
+  #
+  #  `carga_ligando: 0` en los tres porque es lo único coherente con sus PDB,
+  #  que están dibujados en forma neutra. `mol_ligando()` llama a
+  #  rdDetermineBonds.DetermineBondOrders(m, charge=...), que deduce los enlaces
+  #  de la geometría 3D: la carga declarada tiene que cuadrar con los hidrógenos
+  #  presentes en el archivo. Cambiarla a ±1 exige cambiar también el PDB.
+  # ---------------------------------------------------------------------------
+
+  # A pH 7.4 el nitrógeno del quinuclidina (pKa ~8.5) está mayoritariamente
+  # protonado: la forma relevante sería +1, como pasó con pallidine. Esta
+  # entrada es la neutra, la que corresponde al PDB tal cual está.
+  quinine:
+    nombre: Quinine
+    pubchem: 72243208
+    directorio: simulaciones/Quinine_72243208
+    titulo: "Quinine (72243208) – BRAF V600E"
+    receptor: Quinine_72243208_receptor.pdb
+    ligando: Quinine_72243208_ligand.pdb
+    carga_ligando: 0
+
+  # C17H18O5. Si uno de los cinco oxígenos es un carboxilo, a pH 7.4 estaría
+  # desprotonado (carga -1); el PDB está en forma ácida neutra.
+  notholaenic_acid:
+    nombre: Notholaenic acid
+    pubchem: 78213884
+    directorio: simulaciones/NotholaenicAcid_78213884
+    titulo: "Notholaenic acid (78213884) – BRAF V600E"
+    receptor: NotholaenicAcid_78213884_receptor.pdb
+    ligando: NotholaenicAcid_78213884_ligand.pdb
+    carga_ligando: 0
+
+  # Control positivo: inhibidor de BRAF V600E aprobado.
+  #
+  # El PDB del ligando se generó desde el SMILES canónico (PubChem CID 44462760
+  # y componente P06 del PDB, que coinciden en InChIKey), con RDKit ETKDGv3
+  # semilla 2022 + optimización MMFF. Verificado: al releerlo con el mismo
+  # mol_ligando() del pipeline devuelve C23H20F3N5O2S2 e InChIKey
+  # BFSMGDJOXZAERB-UHFFFAOYSA-N.
+  #
+  # El antiguo Data/Dabrafenib_ligand.pdb NO era dabrafenib (C17H15BrF2N4O3,
+  # con bromo y sin azufre) y además era ilegible para RDKit: sin columna de
+  # elemento, el nombre de átomo "BR1" se interpreta como boro.
+  dabrafenib:
+    nombre: Dabrafenib
+    pubchem: 44462760
+    directorio: simulaciones/Dabrafenib_44462760
+    titulo: "Dabrafenib (44462760) – BRAF V600E"
+    receptor: Dabrafenib_44462760_receptor.pdb
+    ligando: Dabrafenib_44462760_ligand.pdb
+    carga_ligando: 0
+
 # -----------------------------------------------------------------------------
 #  Tiempos de simulación predefinidos. --tiempo acepta cualquier valor en ns;
 #  estos son los atajos y sus parámetros derivados.

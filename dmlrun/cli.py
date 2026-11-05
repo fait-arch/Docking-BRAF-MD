@@ -177,12 +177,13 @@ DIR_ENTREGAS = "resultados"
 
 
 def _nombre_entrega(compuesto, etiqueta: str) -> str:
-    """``'10ns'`` + ``'Nothoalenic acid'`` -> ``'10nsNothoalenic acid'``.
+    """``'10ns'`` + ``'Notholaenic acid'`` -> ``'10nsNotholaenicAcid'``.
 
-    El nombre va tal cual está en compuestos.yaml, espacios incluidos, para
-    seguir la convención de carpetas que ya usa el proyecto.
+    Sin espacios a propósito: las directivas ``#SBATCH`` se parten por espacios
+    y no admiten comillas, así que un ``--output=.../10nsNotholaenic acid/...``
+    rompe el envío a Slurm.
     """
-    return f"{etiqueta}{compuesto.nombre.strip()}"
+    return etiqueta + "".join(p[:1].upper() + p[1:] for p in compuesto.nombre.split())
 
 
 def _carpeta_entrega(cfg, compuesto, etiqueta: str) -> Path:

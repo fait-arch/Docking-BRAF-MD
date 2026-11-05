@@ -321,8 +321,9 @@ class Compuesto:
         candidatos = [
             self.entrada_dir / nombre,
             raiz / "simulaciones" / "entrada" / nombre,
-            raiz.parent / "Data" / nombre,
+            raiz / "Data" / nombre,
             raiz / "data" / nombre,
+            raiz.parent / "Data" / nombre,
         ]
         for c in candidatos:
             if c.exists():
