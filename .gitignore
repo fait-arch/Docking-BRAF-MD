@@ -24,6 +24,7 @@ simulaciones/*/y/
 *.swp
 
 # dmlrun: registro local de ejecuciones, informes y corridas nuevas
+/resultados/
 .dmlrun/
 reportes/
 */*/runs/

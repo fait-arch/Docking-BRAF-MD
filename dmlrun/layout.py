@@ -112,6 +112,9 @@ class RunLayout:
     #: Carpeta de entradas del compuesto (scripts/, sistema/). Puede ser
     #: distinta de `base` cuando los resultados viven en otro árbol.
     entradas: Optional[Path] = None
+    #: True cuando la corrida vive en una carpeta plana propia (10nsMacaridine/),
+    #: donde la raíz de la corrida es `base` y no `base/runs/<tiempo>`.
+    plano: bool = False
 
     @property
     def sistema(self) -> Path:
@@ -127,6 +130,8 @@ class RunLayout:
 
     @property
     def raiz_run(self) -> Path:
+        if self.plano:
+            return self.base
         return self.base / "runs" / self.etiqueta
 
     @property

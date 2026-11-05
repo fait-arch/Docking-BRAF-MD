@@ -221,7 +221,7 @@ class PipelineResults(Pipeline):
         cmd_analisis = [
             f"{self.python} {self._script('04_analisis_reporte.py')} \\",
             f"    --base {q(C.directorio)} \\",
-            f"    --md {q(L.rel(L.md))} \\",
+            f"    --md {q(L.md)} \\",
             f"    --fig {q(L.resultados)} \\",
             f"    --out {q(L.analisis)}",
         ]

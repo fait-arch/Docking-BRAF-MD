@@ -138,6 +138,26 @@ servidores:
       - 'export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-$HOME/micromamba}"'
       - 'eval "$(micromamba shell hook -s bash)"'
 
+  # ---------------------------------------------------------------------------
+  #  Portátil "annie" (Ryzen 7 6800H): el entorno md-braf está en miniforge3,
+  #  gestionado por conda, no por micromamba. `conda activate` no funciona en
+  #  un script no interactivo sin cargar antes el hook, de ahí pre_comandos.
+  #
+  #  plataforma_openmm va explícita a CUDA: con `auto` OpenMM podría elegir
+  #  OpenCL sobre los gráficos Radeon integrados en lugar de la GPU NVIDIA.
+  # ---------------------------------------------------------------------------
+  portatil-conda:
+    descripcion: "Portatil annie (conda/miniforge3, GPU NVIDIA via CUDA)"
+    scheduler: local
+    cpus: 6
+    memoria_gb: 16
+    gpus: 1
+    plataforma_openmm: CUDA
+    conda_env: md-braf
+    gestor_entorno: conda
+    pre_comandos:
+      - 'eval "$(conda shell.bash hook)"'
+
   # Aquí mismo, con el entorno que ya esté activo: no activa nada. Útil para
   # etapas cortas, para generar figuras y para probar la CLI.
   actual:

@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 from .config import ConfigError, ProyectoConfig, cargar_proyecto, detectar_servidor
-from .layout import RunLayout, etiqueta_tiempo
+from .layout import NS_PRUEBA, RunLayout, etiqueta_tiempo
 from .pipelines import PIPELINES, Pipeline, construir_pipeline
 from .registry import (Registro, RunRecord, construir_manifiesto,
                        escribir_manifiesto, huella_parametros)
@@ -172,10 +172,53 @@ def cmd_config(cfg: ProyectoConfig, args) -> int:
 # ---------------------------------------------------------------------------
 #  run
 # ---------------------------------------------------------------------------
-def _layout(compuesto, ns: float, modo: str = "auto") -> RunLayout:
-    """Layout de una corrida, con las entradas y los resultados donde toque."""
-    return RunLayout.resolver(compuesto.base_resultados, ns, modo=modo,
-                              entradas=compuesto.directorio)
+#: Carpeta de la raíz del repo donde se crean las corridas nuevas.
+DIR_ENTREGAS = "resultados"
+
+
+def _nombre_entrega(compuesto, etiqueta: str) -> str:
+    """``'10ns'`` + ``'Pallidine protonada'`` -> ``'10nsPallidineProtonada'``."""
+    nombre = "".join(p[:1].upper() + p[1:] for p in compuesto.nombre.split())
+    return f"{etiqueta}{nombre}"
+
+
+def _carpeta_entrega(cfg, compuesto, etiqueta: str) -> Path:
+    """Carpeta plana y autocontenida de una corrida."""
+    return cfg.raiz / DIR_ENTREGAS / _nombre_entrega(compuesto, etiqueta)
+
+
+def _layout(cfg, compuesto, ns: float, modo: str = "auto") -> RunLayout:
+    """Layout de una corrida.
+
+    Las corridas nuevas viven en una carpeta plana propia dentro de
+    ``resultados/`` -- ``resultados/10nsMacaridine/{md,analisis,resultados,
+    ml,estado}`` -- autocontenida y lista para copiar tal cual.
+
+    Lo ya calculado no se mueve: si un tiempo tiene datos en el árbol canónico
+    del compuesto (``resultados_50ns/<Sistema>/md_50ns`` y compañía, de las
+    corridas heredadas), se sigue leyendo de ahí. ``--layout runs`` o
+    ``legacy`` fuerzan el comportamiento anterior.
+    """
+    etiqueta = etiqueta_tiempo(ns)
+    canonico = compuesto.base_resultados
+    if modo in ("runs", "legacy"):
+        return RunLayout.resolver(canonico, ns, modo=modo,
+                                  entradas=compuesto.directorio)
+    plana = _carpeta_entrega(cfg, compuesto, etiqueta)
+    ya_en_canonico = ((canonico / f"md_{etiqueta}").exists()
+                      or (canonico / "runs" / etiqueta / "md").exists()
+                      or (abs(float(ns) - NS_PRUEBA) < 1e-9
+                          and (canonico / "md_prueba").exists()))
+    if not plana.exists() and ya_en_canonico:
+        return RunLayout.resolver(canonico, ns, modo="auto",
+                                  entradas=compuesto.directorio)
+    return RunLayout(
+        base=plana, ns=float(ns), etiqueta=etiqueta,
+        md=plana / "md", analisis=plana / "analisis",
+        resultados=plana / "resultados", ml=plana / "ml",
+        estado=plana / "estado", legacy=False,
+        entradas=compuesto.directorio, plano=True,
+    )
 
 
 def _opciones_pipeline(args) -> Dict:
@@ -250,7 +293,7 @@ def cmd_run(cfg: ProyectoConfig, args) -> int:
 
     for compuesto in compuestos:
         for ns in tiempos:
-            layout = _layout(compuesto, ns, modo=args.layout)
+            layout = _layout(cfg, compuesto, ns, modo=args.layout)
             for clave in pipelines:
                 pipe = construir_pipeline(clave, cfg, compuesto, layout, perfil,
                                           opciones)
@@ -418,7 +461,7 @@ def _progreso(cfg: ProyectoConfig, r: RunRecord) -> str:
         compuesto = cfg.compuesto(r.compuesto)
     except ConfigError:
         return "-"
-    layout = _layout(compuesto, r.tiempo_ns)
+    layout = _layout(cfg, compuesto, r.tiempo_ns)
     if r.pipeline == "ml":
         hitos = [("features", layout.ml / "features.csv"),
                  ("rescored", layout.ml / "rescored.csv")]
@@ -477,10 +520,10 @@ def cmd_comparar(cfg: ProyectoConfig, args) -> int:
     filas = []
     for compuesto in compuestos:
         etiquetas = ([etiqueta_tiempo(t) for t in tiempos] if tiempos
-                     else _tiempos_existentes(compuesto))
+                     else _tiempos_existentes(cfg, compuesto))
         for etq in etiquetas:
             ns = float(etq[:-2]) if etq.endswith("ns") else float(etq)
-            layout = _layout(compuesto, ns)
+            layout = _layout(cfg, compuesto, ns)
             manifiesto = _leer_json(layout.manifiesto)
             filas.append([
                 compuesto.clave,
@@ -520,14 +563,14 @@ def _reporte_tex(cfg: ProyectoConfig, args, compuestos) -> int:
     corridas = []
     for compuesto in compuestos:
         etiquetas = ([etiqueta_tiempo(t) for t in cfg.resolver_tiempos(args.tiempo)]
-                     if args.tiempo else _tiempos_existentes(compuesto))
+                     if args.tiempo else _tiempos_existentes(cfg, compuesto))
         for etq in etiquetas:
             limpio = etq.replace(" (heredado)", "")
             try:
                 ns = float(limpio[:-2]) if limpio.endswith("ns") else float(limpio)
             except ValueError:
                 continue
-            corrida = cargar_corrida(compuesto, _layout(compuesto, ns))
+            corrida = cargar_corrida(compuesto, _layout(cfg, compuesto, ns))
             if corrida:
                 corridas.append(corrida)
 
@@ -585,14 +628,14 @@ def cmd_reporte(cfg: ProyectoConfig, args) -> int:
 
     for compuesto in compuestos:
         etiquetas = ([etiqueta_tiempo(t) for t in cfg.resolver_tiempos(args.tiempo)]
-                     if args.tiempo else _tiempos_existentes(compuesto))
+                     if args.tiempo else _tiempos_existentes(cfg, compuesto))
         for etq in etiquetas:
             limpio = etq.replace(" (heredado)", "")
             try:
                 ns = float(limpio[:-2]) if limpio.endswith("ns") else float(limpio)
             except ValueError:
                 continue
-            layout = _layout(compuesto, ns)
+            layout = _layout(cfg, compuesto, ns)
             rec = recolectar(compuesto, layout, raiz_img=raiz_img)
             if rec.vacia:
                 sin_datos.append(f"{compuesto.clave} @ {limpio}")
@@ -622,13 +665,19 @@ def cmd_reporte(cfg: ProyectoConfig, args) -> int:
     return 0
 
 
-def _tiempos_existentes(compuesto) -> List[str]:
+def _tiempos_existentes(cfg, compuesto) -> List[str]:
     etiquetas = []
     if compuesto.runs_dir.exists():
         etiquetas += sorted(d.name for d in compuesto.runs_dir.iterdir() if d.is_dir())
     for d in sorted(compuesto.base_resultados.glob("md_*")):
         etq = "0.1ns" if d.name == "md_prueba" else d.name[3:]
         if etq not in etiquetas:
+            etiquetas.append(etq)
+    # Carpetas planas: resultados/10nsMacaridine, resultados/20nsMacaridine...
+    sufijo = _nombre_entrega(compuesto, "")
+    for d in sorted((cfg.raiz / DIR_ENTREGAS).glob(f"*ns{sufijo}")):
+        etq = d.name[: -len(sufijo)]
+        if d.is_dir() and etq and etq not in etiquetas:
             etiquetas.append(etq)
     return etiquetas
 
