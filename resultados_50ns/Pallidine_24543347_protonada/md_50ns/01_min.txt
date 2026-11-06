@@ -1,2 +1,0 @@
-E_inicial -553170.8599421275 kJ/mol
-E_final -802830.6854256256 kJ/mol

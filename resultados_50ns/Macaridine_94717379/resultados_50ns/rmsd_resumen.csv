@@ -1,6 +1,0 @@
-,rmsd_CA_A,rmsd_CA_A,rmsd_CA_A,rmsd_ligando_A,rmsd_ligando_A,rmsd_ligando_A
-,mean,std,max,mean,std,max
-fase,,,,,,
-Calentamiento,1.08,0.12,1.35,1.32,0.46,2.16
-Equilibrado,1.47,0.08,1.69,1.5,0.36,2.29
-Producción,1.95,0.28,2.72,2.75,0.64,3.95
