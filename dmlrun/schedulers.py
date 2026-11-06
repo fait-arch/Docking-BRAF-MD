@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 import shlex
 import subprocess
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -291,10 +292,14 @@ class LocalScheduler(Scheduler):
         job.log.parent.mkdir(parents=True, exist_ok=True)
         pid_file = job.estado_dir / "pid"
         job.estado_dir.mkdir(parents=True, exist_ok=True)
-        # setsid desacopla el proceso de la terminal: sigue vivo al cerrar la sesión.
+        # `start_new_session=True` ya llama a setsid() en el hijo: el proceso queda
+        # desacoplado de la terminal y sigue vivo al cerrar la sesión. NO hay que
+        # envolverlo además en el binario `setsid`: al ser ya líder de sesión, ese
+        # binario hace fork y sale, y el PID que guardaríamos moriría al instante
+        # (status daría INTERRUMPIDO sobre un trabajo en marcha, y cancel fallaría).
         with open(job.log, "ab") as log:
             proc = subprocess.Popen(
-                ["setsid", "bash", str(script)],
+                ["bash", str(script)],
                 stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                 cwd=str(job.workdir), start_new_session=True,
             )
@@ -317,11 +322,28 @@ class LocalScheduler(Scheduler):
             os.kill(pid, 0)
             return "RUNNING"
         except ProcessLookupError:
-            return "INTERRUMPIDO"
+            # El PID puede ser inservible (envíos de versiones anteriores, o un
+            # relanzamiento desde otra sesión) sin que el trabajo esté muerto.
+            # Si la corrida sigue escribiendo en disco, está en marcha.
+            return "RUNNING" if self._actividad_reciente(estado_dir) else "INTERRUMPIDO"
         except PermissionError:
             return "RUNNING"
         except OSError:
             return "DESCONOCIDO"
+
+    @staticmethod
+    def _actividad_reciente(estado_dir: Optional[Path], minutos: int = 10) -> bool:
+        """¿Algún archivo de la corrida se ha escrito en los últimos `minutos`?"""
+        if not estado_dir:
+            return False
+        limite = time.time() - minutos * 60
+        for ruta in Path(estado_dir).parent.rglob("*"):
+            try:
+                if ruta.is_file() and ruta.stat().st_mtime > limite:
+                    return True
+            except OSError:
+                continue
+        return False
 
     def cancel(self, job_id: str) -> str:
         import signal
