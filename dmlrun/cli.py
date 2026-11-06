@@ -328,6 +328,10 @@ def cmd_run(cfg: ProyectoConfig, args) -> int:
                     continue
 
                 if not args.dry_run:
+                    # El directorio del compuesto es el workdir del trabajo: para un
+                    # compuesto recien registrado todavia no existe, y tanto el `cd`
+                    # del script como el cwd= de Popen fallarian antes de empezar.
+                    compuesto.directorio.mkdir(parents=True, exist_ok=True)
                     layout.crear()
                 job = _job_de_pipeline(pipe, perfil, layout, etapas, args.forzar,
                                        args.horas, args.cpus, args.memoria)
