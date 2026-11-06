@@ -8,6 +8,18 @@ simulaciones/*/resultados*/
 corrida*.log
 nohup.out
 
+# Slurm: salidas sueltas cuando un trabajo no usa --output
+slurm-*.out
+slurm-*.err
+
+# Restos que antechamber/tleap dejan en el directorio de trabajo
+ANTECHAMBER_*
+ATOMTYPE.INF
+NEWPDB.PDB
+PREP.INF
+leap.log.*
+*.lock
+
 # Python
 __pycache__/
 *.pyc

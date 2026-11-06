@@ -1,0 +1,34 @@
+{
+  "protonacion": {
+    "477": "HID",
+    "510": "HID",
+    "539": "HID",
+    "540": "HID",
+    "542": "HIE",
+    "568": "HIE",
+    "574": "HID",
+    "585": "HID",
+    "600": "GLH",
+    "608": "HID"
+  },
+  "ligando_smiles": "COc1ccc(CCc2cc(OC)cc(O)c2C(=O)O)cc1",
+  "distancia_ligando_original_al_bolsillo_A": 17.39286217316646,
+  "vina_mejor_kcal_mol": -7.719,
+  "vina_n_poses": 99,
+  "distancia_minima_ligando_proteina_A": 1.83,
+  "carga_soluto": 7.998,
+  "aguas_iniciales": 14935,
+  "Na+": 37,
+  "Cl-": 45,
+  "carga_final": -0.002,
+  "n_atomos": 49140,
+  "aguas_finales": 14853,
+  "caja_A_grados": [
+    89.577,
+    89.577,
+    89.577,
+    109.471,
+    109.471,
+    109.471
+  ]
+}
