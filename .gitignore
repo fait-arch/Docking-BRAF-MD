@@ -39,6 +39,7 @@ simulaciones/*/y/
 # dmlrun: registro local de ejecuciones, informes y corridas nuevas
 /resultados/
 /resultados_50ns/
+/exportacion/
 .dmlrun/
 reportes/
 */*/runs/
