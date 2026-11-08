@@ -61,7 +61,7 @@ compuestos:
     directorio_resultados: resultados_50ns/Pallidine_24543347_protonada
     titulo: "Pallidine protonada (24543347, +1) – BRAF V600E"
     receptor: Pallidine24543347_receptor.pdb
-    ligando: Pallidine24543347_ligand.pdb
+    ligando: Pallidine_24543347_cation_ligand.pdb
     smiles: "COC1=C[C@@]23CC[NH+](C)[C@@H](Cc4cc(O)c(OC)cc42)C3=CC1=O"
     carga_ligando: 1
 
@@ -122,6 +122,42 @@ compuestos:
     receptor: Dabrafenib_44462760_receptor.pdb
     ligando: Dabrafenib_44462760_ligand.pdb
     carga_ligando: 0
+
+  # ---------------------------------------------------------------------------
+  #  Estados de protonación a pH 7.4 (añadidos el 08/11/2026).
+  #
+  #  Los PDB los genera generar_ligandos.py desde el SMILES, y cada uno queda
+  #  verificado releyéndolo con el mol_ligando() del pipeline. La carga NO se
+  #  puede cambiar sin cambiar el PDB: DetermineBondOrders deduce los enlaces
+  #  contando los hidrógenos del archivo.
+  # ---------------------------------------------------------------------------
+
+  # pKa 8.4 (Roy L, Leblanc M, Bannon P, Villeneuve JP. Br J Clin Pharmacol
+  # 2002;54:604-609. PMID 12492607) -> 91 % protonada a pH 7.4. La entrada
+  # `quinine` neutra se conserva: es la que ya tiene 10 ns corridos.
+  quinine_protonada:
+    nombre: Quinine protonada
+    pubchem: 72243208
+    directorio: simulaciones/Quinine_72243208_protonada
+    titulo: "Quinine protonada (72243208, +1) – BRAF V600E"
+    receptor: Quinine_72243208_receptor.pdb
+    ligando: Quinine_72243208_cation_ligand.pdb
+    smiles: "C=C[C@H]1C[NH+]2CC[C@H]1C[C@H]2[C@H](O)c1ccnc2ccc(OC)cc12"
+    carga_ligando: 1
+
+  # Carboxilo confirmado (Cioffi G et al. Molecules 2011;16:2527-2541.
+  # PMID 21415834; aislamiento original Wollenweber E, Favre-Bonvin J.
+  # Phytochemistry 1979;18:1243-1244), pero SIN pKa experimental publicado.
+  # Por eso se corren las DOS formas y se compara, en vez de asumir.
+  notholaenic_acid_anion:
+    nombre: Notholaenic acid anion
+    pubchem: 78213884
+    directorio: simulaciones/NotholaenicAcid_78213884_anion
+    titulo: "Ácido notoloénico aniónico (78213884, -1) – BRAF V600E"
+    receptor: NotholaenicAcid_78213884_receptor.pdb
+    ligando: NotholaenicAcid_78213884_anion_ligand.pdb
+    smiles: "COc1ccc(CCc2cc(OC)cc(O)c2C(=O)[O-])cc1"
+    carga_ligando: -1
 
 # -----------------------------------------------------------------------------
 #  Tiempos de simulación predefinidos. --tiempo acepta cualquier valor en ns;
