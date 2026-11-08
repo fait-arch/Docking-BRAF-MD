@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -187,11 +188,42 @@ def _nombre_entrega(compuesto, etiqueta: str) -> str:
 
 
 def _carpeta_entrega(cfg, compuesto, etiqueta: str) -> Path:
-    """Carpeta plana y autocontenida de una corrida."""
-    return cfg.raiz / DIR_ENTREGAS / _nombre_entrega(compuesto, etiqueta)
+    """Carpeta plana y autocontenida de una corrida, con su marca de fecha."""
+    sello = datetime.now().strftime("%Y%m%d-%H%M")
+    return (cfg.raiz / DIR_ENTREGAS /
+            f"{_nombre_entrega(compuesto, etiqueta)}_{sello}")
 
 
-def _layout(cfg, compuesto, ns: float, modo: str = "auto") -> RunLayout:
+def _corridas_previas(cfg, compuesto, etiqueta: str) -> List[Path]:
+    """Carpetas ya existentes de ese compuesto y tiempo, de la más nueva a la
+    más vieja. Acepta las antiguas sin fecha, para no abandonar lo ya corrido."""
+    base = cfg.raiz / DIR_ENTREGAS
+    if not base.is_dir():
+        return []
+    pref = _nombre_entrega(compuesto, etiqueta)
+    hallados = [d for d in base.iterdir()
+                if d.is_dir() and (d.name == pref or
+                                   re.fullmatch(rf"{re.escape(pref)}_\d{{8}}-\d{{4}}", d.name))]
+    return sorted(hallados, key=lambda d: d.name, reverse=True)
+
+
+def _topologia_rehecha(compuesto, carpeta: Path) -> bool:
+    """¿Se reconstruyó el sistema DESPUÉS de empezar esa corrida?
+
+    Si es así, reanudar sería mezclar una trayectoria vieja con una topología
+    nueva: el pipeline daría por buenos los .xml existentes y el resultado
+    sería un híbrido silencioso. En ese caso se abre una carpeta nueva.
+    """
+    try:
+        prmtop = (compuesto.sistema_dir / "sistema.prmtop").stat().st_mtime
+        marca = (carpeta / "md" / "01_min.xml").stat().st_mtime
+    except OSError:
+        return False
+    return prmtop > marca
+
+
+def _layout(cfg, compuesto, ns: float, modo: str = "auto",
+            nueva: bool = False) -> RunLayout:
     """Layout de una corrida.
 
     Las corridas nuevas viven en una carpeta plana propia dentro de
@@ -208,12 +240,19 @@ def _layout(cfg, compuesto, ns: float, modo: str = "auto") -> RunLayout:
     if modo in ("runs", "legacy"):
         return RunLayout.resolver(canonico, ns, modo=modo,
                                   entradas=compuesto.directorio)
-    plana = _carpeta_entrega(cfg, compuesto, etiqueta)
+    # Se reanuda la corrida más reciente salvo que se pida una nueva, o que el
+    # sistema se haya reconstruido desde entonces. Nada se sobrescribe jamás:
+    # cada ejecución nueva estrena su propia carpeta fechada.
+    previas = _corridas_previas(cfg, compuesto, etiqueta)
+    reutilizable = next((c for c in previas
+                         if not _topologia_rehecha(compuesto, c)), None)
+    plana = (_carpeta_entrega(cfg, compuesto, etiqueta)
+             if (nueva or reutilizable is None) else reutilizable)
     ya_en_canonico = ((canonico / f"md_{etiqueta}").exists()
                       or (canonico / "runs" / etiqueta / "md").exists()
                       or (abs(float(ns) - NS_PRUEBA) < 1e-9
                           and (canonico / "md_prueba").exists()))
-    if not plana.exists() and ya_en_canonico:
+    if not previas and ya_en_canonico:
         return RunLayout.resolver(canonico, ns, modo="auto",
                                   entradas=compuesto.directorio)
     return RunLayout(
@@ -297,7 +336,8 @@ def cmd_run(cfg: ProyectoConfig, args) -> int:
 
     for compuesto in compuestos:
         for ns in tiempos:
-            layout = _layout(cfg, compuesto, ns, modo=args.layout)
+            layout = _layout(cfg, compuesto, ns, modo=args.layout,
+                                 nueva=args.nueva_corrida)
             for clave in pipelines:
                 pipe = construir_pipeline(clave, cfg, compuesto, layout, perfil,
                                           opciones)
@@ -683,10 +723,12 @@ def _tiempos_existentes(cfg, compuesto) -> List[str]:
             etiquetas.append(etq)
     # Carpetas planas: resultados/10nsMacaridine, resultados/20nsMacaridine...
     sufijo = _nombre_entrega(compuesto, "")
-    for d in sorted((cfg.raiz / DIR_ENTREGAS).glob(f"*ns{sufijo}")):
-        etq = d.name[: -len(sufijo)]
-        if d.is_dir() and etq and etq not in etiquetas:
-            etiquetas.append(etq)
+    patron = re.compile(rf"^([\d.]+ns){re.escape(sufijo)}(_\d{{8}}-\d{{4}})?$")
+    base = cfg.raiz / DIR_ENTREGAS
+    for d in sorted(base.iterdir()) if base.is_dir() else []:
+        m = patron.match(d.name)
+        if d.is_dir() and m and m.group(1) not in etiquetas:
+            etiquetas.append(m.group(1))
     return etiquetas
 
 
@@ -743,6 +785,8 @@ def construir_parser() -> argparse.ArgumentParser:
                         "ml: centro,docking,complejos,features,rescore)")
     r.add_argument("--layout", default="auto", choices=["auto", "runs", "legacy"],
                    help="auto reutiliza carpetas antiguas si existen")
+    r.add_argument("--nueva-corrida", action="store_true",
+                   help="estrena carpeta fechada en vez de reanudar la última")
     r.add_argument("--forzar", action="store_true",
                    help="repite etapas ya completadas")
     r.add_argument("--dry-run", action="store_true",
