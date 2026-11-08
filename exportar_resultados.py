@@ -37,6 +37,22 @@ CAMPOS_RESUMEN = ("rmsd_CA_final", "rmsd_CA_pendiente_A_por_ns", "rmsf_media",
 TERMINOS = ("VDWAALS", "EEL", "EGB", "ESURF")
 
 
+def corridas(tiempo):
+    """Carpetas de ese tiempo, una por compuesto: la de la sesión más reciente.
+
+    Busca tanto en resultados/<sesión>/<corrida> (disposición actual) como en
+    resultados/<corrida> (las heredadas), para no dejar fuera nada viejo.
+    """
+    hallados = []
+    for patron in (os.path.join(RAIZ, "resultados", f"{tiempo}ns*"),
+                   os.path.join(RAIZ, "resultados", "*", f"{tiempo}ns*")):
+        hallados += [c for c in glob.glob(patron) if os.path.isdir(c)]
+    mejor = {}
+    for c in sorted(hallados):        # la sesión más nueva ordena al final
+        mejor[os.path.basename(c)] = c
+    return [mejor[k] for k in sorted(mejor)]
+
+
 def ultimo_valor(texto, termino):
     """El valor del término en el bloque 'Differences', que es el último."""
     hits = re.findall(rf"^\s*{termino}\s+(-?[\d.]+)", texto, re.M)
@@ -74,7 +90,7 @@ def leer(carpeta):
 
 
 def main():
-    carpetas = sorted(glob.glob(os.path.join(RAIZ, "resultados", f"{TIEMPO}ns*")))
+    carpetas = corridas(TIEMPO)
     if not carpetas:
         sys.exit(f"No hay carpetas resultados/{TIEMPO}ns* en {RAIZ}")
 

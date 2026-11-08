@@ -247,14 +247,34 @@ va a GitHub** (`/resultados/` está en `.gitignore`):
 
 ```
 resultados/
-├── 10nsQuinine/                        corridas anteriores a las carpetas fechadas
-├── 10nsQuinineProtonada_20261108-0311/ ← una ejecución
-│   ├── md/          trayectorias .dcd y estados .xml  (el 99 % del peso)
-│   ├── resultados/  las 10 figuras, en PNG y PDF
-│   ├── analisis/    resumen.json, CSV y mmgbsa/FINAL_MMGBSA.dat
-│   └── estado/      log, script enviado, manifest.json
-└── 10nsQuinineProtonada_20261112-0940/ ← la siguiente, al lado
+├── 20261105-1702/                  una carpeta por TANDA de lanzamiento
+│   └── 10nsMacaridine/
+├── 20261106-0107/                  los tres que se lanzaron juntos
+│   ├── 10nsDabrafenib/
+│   │   ├── md/          trayectorias .dcd y estados .xml (el 99 % del peso)
+│   │   ├── resultados/  las 10 figuras, en PNG y PDF
+│   │   ├── analisis/    resumen.json, CSV y mmgbsa/FINAL_MMGBSA.dat
+│   │   └── estado/      log, script enviado, manifest.json
+│   ├── 10nsQuinine/
+│   └── 10nsNotholaenicAcid/
+└── 20261108-0439/                  la tanda siguiente, sin mezclarse
+    ├── 0.1nsQuinineProtonada/
+    ├── 0.1nsNotholaenicAcidAnion/
+    └── 0.1nsPallidineProtonada/
 ```
+
+El sello `AAAAMMDD-HHMM` se calcula **una vez por invocación de la CLI**, no por
+compuesto: así una tanda de cinco cae entera en la misma carpeta aunque el envío cruce un minuto.
+
+Las corridas de disposiciones anteriores (planas en la raíz, o con la fecha pegada al nombre) se siguen
+reconociendo, así que nada queda huérfano. Para agruparlas:
+
+```bash
+python3 migrar_resultados.py            # enseña el plan, no mueve nada
+python3 migrar_resultados.py --aplicar
+```
+
+Toma la fecha del `run_id` de cada `manifest.json`, que es el momento real del envío.
 
 Cuándo reanuda y cuándo estrena carpeta:
 
@@ -435,8 +455,9 @@ simulaciones/
     scripts/                       01 preparar · 02 dinámica · 03 RMSD · 04 análisis
                                    05 MM/GBSA · 06 entrada de ML · benchmark
     <Sistema>/sistema/             sistema AMBER preparado (entrada de la dinámica)
-resultados/<tiempo>ns<Nombre>_<fecha>/   corridas nuevas (NO versionadas)
+resultados/<sesion>/<tiempo>ns<Nombre>/  corridas, por tanda (NO versionadas)
 exportacion/                       CSV, paquetes y figuras combinadas (NO versionada)
+migrar_resultados.py               agrupa corridas sueltas en carpetas por sesión
 trayectorias_50ns/<Sistema>/       DCD de producción y topología seca
 correr_hpc_cedia.sh                lanzador para CEDIA, con comprobaciones previas
 generar_ligandos.py                PDB de los estados de protonación, desde SMILES

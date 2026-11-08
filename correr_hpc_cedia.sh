@@ -150,7 +150,7 @@ squeue -u "$USER" -o "%.8i %.24j %.9T %.10M %.28R"
 printf '\nSeguimiento:\n'
 printf '    dmlrun status\n'
 printf '    squeue -u $USER\n'
-printf '    tail -f resultados/%sns<Compuesto>/estado/ejecucion.log\n\n' "$TIEMPO"
-printf 'Los resultados van a resultados/<tiempo>ns<Compuesto>/ (md, resultados,\n'
-printf 'analisis, estado). Es reanudable: si Slurm corta un trabajo por tiempo,\n'
-printf 'relanza el mismo comando y continúa desde el último segmento.\n'
+printf '    tail -f resultados/<sesion>/<tiempo>ns<Compuesto>/estado/ejecucion.log\n\n'
+printf 'Los resultados van a resultados/<sesion>/<tiempo>ns<Compuesto>/ (md,\n'
+printf 'resultados, analisis, estado): una carpeta por tanda de lanzamiento. Es\n'
+printf 'reanudable: si Slurm corta por tiempo, relanza y sigue donde iba.\n'

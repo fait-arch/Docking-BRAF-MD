@@ -56,6 +56,22 @@ def series(carpeta, columna):
     return t, v
 
 
+def corridas(tiempo):
+    """Carpetas de ese tiempo, una por compuesto: la de la sesión más reciente.
+
+    Busca tanto en resultados/<sesión>/<corrida> (disposición actual) como en
+    resultados/<corrida> (las heredadas), para no dejar fuera nada viejo.
+    """
+    hallados = []
+    for patron in (os.path.join(RAIZ, "resultados", f"{tiempo}ns*"),
+                   os.path.join(RAIZ, "resultados", "*", f"{tiempo}ns*")):
+        hallados += [c for c in glob.glob(patron) if os.path.isdir(c)]
+    mejor = {}
+    for c in sorted(hallados):        # la sesión más nueva ordena al final
+        mejor[os.path.basename(c)] = c
+    return [mejor[k] for k in sorted(mejor)]
+
+
 def suavizar(v, ventana=51):
     """Media móvil centrada. Mil puntos crudos de cinco series son una maraña:
     la traza cruda va tenue al fondo y esta media al frente."""
@@ -165,8 +181,7 @@ def paneles(carpetas, columna, titulo, ylab, nombre):
 
 
 def main():
-    carpetas = [c for c in sorted(glob.glob(
-        os.path.join(RAIZ, "resultados", f"{TIEMPO}ns*"))) if os.path.isdir(c)]
+    carpetas = corridas(TIEMPO)
     if not carpetas:
         sys.exit(f"No hay carpetas resultados/{TIEMPO}ns* en {RAIZ}")
     os.makedirs(SALIDA, exist_ok=True)

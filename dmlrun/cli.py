@@ -176,6 +176,14 @@ def cmd_config(cfg: ProyectoConfig, args) -> int:
 #: Carpeta de la raíz del repo donde se crean las corridas nuevas.
 DIR_ENTREGAS = "resultados"
 
+#: Sello de la sesión: se calcula UNA vez por invocación de la CLI, para que
+#: todos los compuestos lanzados juntos caigan en la misma carpeta de fecha.
+#: Si se calculara por compuesto, una tanda que cruce un minuto se partiría.
+SELLO_SESION = datetime.now().strftime("%Y%m%d-%H%M")
+
+#: Una carpeta de sesión: AAAAMMDD-HHMM.
+RE_SESION = re.compile(r"^\d{8}-\d{4}$")
+
 
 def _nombre_entrega(compuesto, etiqueta: str) -> str:
     """``'10ns'`` + ``'Notholaenic acid'`` -> ``'10nsNotholaenicAcid'``.
@@ -188,23 +196,47 @@ def _nombre_entrega(compuesto, etiqueta: str) -> str:
 
 
 def _carpeta_entrega(cfg, compuesto, etiqueta: str) -> Path:
-    """Carpeta plana y autocontenida de una corrida, con su marca de fecha."""
-    sello = datetime.now().strftime("%Y%m%d-%H%M")
-    return (cfg.raiz / DIR_ENTREGAS /
-            f"{_nombre_entrega(compuesto, etiqueta)}_{sello}")
+    """``resultados/<sesión>/<tiempo>ns<Nombre>``."""
+    return (cfg.raiz / DIR_ENTREGAS / SELLO_SESION /
+            _nombre_entrega(compuesto, etiqueta))
 
 
-def _corridas_previas(cfg, compuesto, etiqueta: str) -> List[Path]:
-    """Carpetas ya existentes de ese compuesto y tiempo, de la más nueva a la
-    más vieja. Acepta las antiguas sin fecha, para no abandonar lo ya corrido."""
+def _carpetas_de_compuesto(cfg) -> List[Path]:
+    """Todas las carpetas de corrida bajo resultados/, sean de la sesión que
+    sean, incluidas las heredadas que cuelgan directamente de la raíz."""
     base = cfg.raiz / DIR_ENTREGAS
     if not base.is_dir():
         return []
-    pref = _nombre_entrega(compuesto, etiqueta)
-    hallados = [d for d in base.iterdir()
-                if d.is_dir() and (d.name == pref or
-                                   re.fullmatch(rf"{re.escape(pref)}_\d{{8}}-\d{{4}}", d.name))]
-    return sorted(hallados, key=lambda d: d.name, reverse=True)
+    salida = []
+    for d in base.iterdir():
+        if not d.is_dir():
+            continue
+        if RE_SESION.match(d.name):
+            salida += [x for x in d.iterdir() if x.is_dir()]
+        else:
+            salida.append(d)
+    return salida
+
+
+def _corridas_previas(cfg, compuesto, etiqueta: str) -> List[Path]:
+    """Corridas ya existentes de ese compuesto y tiempo, de la más nueva a la
+    más vieja.
+
+    Reconoce las tres disposiciones que ha tenido el proyecto: la actual
+    (``<sesión>/<tiempo>ns<Nombre>``), la intermedia con la fecha pegada al
+    nombre, y la plana original. Así ninguna corrida vieja queda huérfana.
+    """
+    nombre = _nombre_entrega(compuesto, etiqueta)
+    hallados = []
+    for d in _carpetas_de_compuesto(cfg):
+        if d.name == nombre:
+            sello = d.parent.name if RE_SESION.match(d.parent.name) else "00000000-0000"
+            hallados.append((sello, d))
+            continue
+        m = re.fullmatch(rf"{re.escape(nombre)}_(\d{{8}}-\d{{4}})", d.name)
+        if m:
+            hallados.append((m.group(1), d))
+    return [c for _, c in sorted(hallados, key=lambda x: x[0], reverse=True)]
 
 
 def _topologia_rehecha(compuesto, carpeta: Path) -> bool:
@@ -724,10 +756,9 @@ def _tiempos_existentes(cfg, compuesto) -> List[str]:
     # Carpetas planas: resultados/10nsMacaridine, resultados/20nsMacaridine...
     sufijo = _nombre_entrega(compuesto, "")
     patron = re.compile(rf"^([\d.]+ns){re.escape(sufijo)}(_\d{{8}}-\d{{4}})?$")
-    base = cfg.raiz / DIR_ENTREGAS
-    for d in sorted(base.iterdir()) if base.is_dir() else []:
+    for d in sorted(_carpetas_de_compuesto(cfg), key=lambda x: x.name):
         m = patron.match(d.name)
-        if d.is_dir() and m and m.group(1) not in etiquetas:
+        if m and m.group(1) not in etiquetas:
             etiquetas.append(m.group(1))
     return etiquetas
 
