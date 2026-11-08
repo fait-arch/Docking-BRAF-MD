@@ -7,14 +7,35 @@ sitio de ATP de la quinasa **BRAF V600E**, siguiendo el protocolo de la sección
 El repositorio contiene **el programa, los datos de entrada y el reporte**. Las trayectorias y los análisis
 pesados no se versionan: se generan al correr los pipelines (ver `.gitignore`).
 
-| Sistema | Clave para la CLI | PubChem CID | Carga del ligando | 50 ns |
-|---|---|---|---|---|
-| Macaridine | `macaridine` | 94717379 | 0 | sí |
-| Pallidine (neutra) | `pallidine` | 24543347 | 0 | abandonada |
-| Pallidine protonada | `pallidine_protonada` | 24543347 | +1 | sí |
+| Sistema | Clave para la CLI | PubChem CID | Carga | 10 ns | Nota |
+|---|---|---|---|---|---|
+| Dabrafenib | `dabrafenib` | 44462760 | 0 | ✅ | **control positivo** |
+| Macaridine | `macaridine` | 94717379 | 0 | ✅ | |
+| Notholaenic acid | `notholaenic_acid` | 78213884 | 0 | ✅ | forma neutra |
+| Notholaenic acid anión | `notholaenic_acid_anion` | 78213884 | −1 | — | sin pKa medido |
+| Pallidine | `pallidine` | 24543347 | 0 | ✅ | forma neutra |
+| Pallidine protonada | `pallidine_protonada` | 24543347 | +1 | — | |
+| Quinine | `quinine` | 72243208 | 0 | ✅ | protonación incorrecta |
+| Quinine protonada | `quinine_protonada` | 72243208 | +1 | — | **la válida a pH 7.4** |
 
-La forma neutra de Pallidine se abandonó al comprobar que a pH 7.4 su amina terciaria está protonada; la
-corrida válida es la de `pallidine_protonada`. El registro del intento se conserva para documentarlo.
+### Estados de protonación — leer antes de interpretar nada
+
+A pH 7.4 varios de estos compuestos **no están neutros**, y la carga no es un número que se pueda cambiar
+en el YAML: `mol_ligando()` deduce los enlaces de la geometría 3D contando los hidrógenos del archivo, así
+que el PDB tiene que llevar el protón puesto o quitado. Cambiarla obliga además a rehacer las cargas
+AM1-BCC, los contraiones de la caja y el *docking*, porque Vina puntúa la electrostática. Es decir: hay que
+volver a correr la etapa `sistema` completa.
+
+| Compuesto | Estado a pH 7.4 | Base |
+|---|---|---|
+| Quinine | **+1**, 91 % | pKa 8.4 — Roy L *et al.*, *Br J Clin Pharmacol* 2002;54:604-609 (PMID 12492607) |
+| Notholaenic acid | **−1** (inferido) | carboxilo confirmado — Cioffi G *et al.*, *Molecules* 2011;16:2527-2541 (PMID 21415834). **Sin pKa experimental publicado**: se corren las dos formas |
+| Pallidine | **+1** | amina terciaria |
+| Dabrafenib, Macaridine | 0 | |
+
+Los PDB cargados los genera `generar_ligandos.py` desde el SMILES, y cada uno se verifica releyéndolo con
+el mismo `mol_ligando()` del pipeline y comparando su InChIKey. Las formas neutras se conservan como
+entradas aparte: son las que tienen los 10 ns corridos y hacen falta para la comparación.
 
 ---
 
@@ -42,7 +63,7 @@ dmlrun reporte         # informe HTML, o secciones LaTeX dentro del paper
 | `hpc-cpu` | HPC CEDIA | Slurm | 16 núcleos, 48 GB, 24 h, sin GPU |
 | `linux-gpu` | Servidor Linux externo | ninguna (`setsid`) | GPU NVIDIA |
 | `linux-cpu` | Servidor Linux externo | ninguna (`setsid`) | solo CPU |
-| `portatil` | Portátil con RTX 3060 | ninguna | ~135 ns/día |
+| `portatil` | Portátil con RTX 3060 (micromamba) | ninguna | 16-30 ns/día medidos |
 | `actual` | Aquí mismo, entorno ya activo | ninguna | pruebas cortas y figuras |
 
 `--servidor auto` elige solo: respeta `$DMLRUN_SERVIDOR`, luego un perfil que se llame como el *hostname*,
@@ -124,14 +145,15 @@ Lo que distingue a un sistema de otro está en `config/compuestos.yaml`, no en l
 **carga del ligando** (0 para la forma neutra, +1 para la protonada), el título de las figuras y los residuos
 que definen el centro del bolsillo. Los scripts de `simulaciones/scripts/` son los mismos para todos.
 
-> **Falta por versionar.** `simulaciones/Pallidine_24543347_protonada/sistema/` no está en el repositorio,
-> aunque es el sistema que produjo la corrida de 50 ns usada en el reporte. Hasta que se añada, esa corrida
-> no es reproducible desde cero en otra PC. Se regenera con:
+> **Pendiente.** Los tres sistemas con carga (`quinine_protonada`, `notholaenic_acid_anion`,
+> `pallidine_protonada`) todavía no tienen su `sistema/` preparado. Sus PDB ya están en `Data/` y
+> verificados; falta correr la etapa:
 > ```bash
-> dmlrun run --pipeline resultados --compuesto pallidine_protonada \
->        --tiempo 50 --etapas sistema --servidor actual
+> ENVIAR=1 ./correr_hpc_cedia.sh prueba quinine_protonada,notholaenic_acid_anion,pallidine_protonada
 > ```
-> La carga +1 ya está declarada en `config/compuestos.yaml`, así que no hay que pasarla a mano.
+> Hasta noviembre de 2026 `pallidine_protonada` era inejecutable: declaraba carga +1 apuntando al PDB
+> **neutro** de pallidine, y `DetermineBondOrders` no puede colocar una carga sobre una molécula con los
+> hidrógenos de la forma neutra. Ya tiene su propio PDB.
 
 ### Añadir un compuesto
 
@@ -142,7 +164,6 @@ que definen el centro del bolsillo. Los scripts de `simulaciones/scripts/` son l
        nombre: MiCompuesto
        pubchem: 12345678
        directorio: simulaciones/MiCompuesto_12345678
-       directorio_resultados: resultados_50ns/MiCompuesto_12345678
        titulo: "MiCompuesto (12345678) – BRAF V600E"
        receptor: MiCompuesto12345678_receptor.pdb
        ligando: MiCompuesto12345678_ligand.pdb
@@ -168,7 +189,7 @@ No hay que copiar scripts ni editar ninguno: antes había que cambiar el nombre 
 Etapas: `sistema`, `min`, `cal`, `eq`, `prod`, `rmsd`, `analisis`, `mmgbsa`.
 
 ```bash
-# los dos sistemas, 50 ns, en la HPC
+# todos los compuestos registrados, 50 ns, en la HPC
 dmlrun run --pipeline resultados --compuesto todos --tiempo 50 --servidor hpc
 
 # ver el plan y el sbatch sin enviar nada
@@ -185,7 +206,7 @@ dmlrun run --pipeline resultados --compuesto todos --tiempo 50 \
        --etapas rmsd,analisis,mmgbsa --servidor hpc-cpu
 
 # prueba rápida antes de ocupar la cola (100 ps, mismo protocolo)
-dmlrun run --pipeline resultados --compuesto macaridine --tiempo prueba --servidor portatil
+dmlrun run --pipeline resultados --compuesto macaridine --tiempo prueba --servidor actual
 ```
 
 El tiempo de simulación es un parámetro, no una carpeta fija: `--tiempo 10,20,50` lanza las tres y cada una
@@ -216,6 +237,48 @@ dmlrun run --pipeline ml --compuesto todos --tiempo 50 \
 
 El rescoring necesita un modelo entrenado con afinidades conocidas frente a BRAF (por ejemplo de ChEMBL);
 sin él, el pipeline deja los descriptores calculados en `features.csv` y no puntúa.
+
+---
+
+## Dónde se guardan los resultados
+
+Cada ejecución estrena su propia carpeta, fechada, dentro de `resultados/`. **Nada se sobrescribe y nada
+va a GitHub** (`/resultados/` está en `.gitignore`):
+
+```
+resultados/
+├── 10nsQuinine/                        corridas anteriores a las carpetas fechadas
+├── 10nsQuinineProtonada_20261108-0311/ ← una ejecución
+│   ├── md/          trayectorias .dcd y estados .xml  (el 99 % del peso)
+│   ├── resultados/  las 10 figuras, en PNG y PDF
+│   ├── analisis/    resumen.json, CSV y mmgbsa/FINAL_MMGBSA.dat
+│   └── estado/      log, script enviado, manifest.json
+└── 10nsQuinineProtonada_20261112-0940/ ← la siguiente, al lado
+```
+
+Cuándo reanuda y cuándo estrena carpeta:
+
+| Situación | Qué hace |
+|---|---|
+| Relanzas un compuesto ya corrido | **reanuda** — si Slurm cortó por tiempo, no se pierden horas |
+| Compuesto o tiempo nuevos | carpeta nueva con fecha `AAAAMMDD-HHMM` |
+| `--nueva-corrida` | carpeta nueva aunque haya una previa |
+| **Rehiciste la topología** | **carpeta nueva automática** |
+
+Lo último es una salvaguarda, no un adorno: compara la fecha de `sistema.prmtop` con la del `01_min.xml`
+de la corrida. Sin ella, reanudar tras reconstruir un sistema mezclaría una trayectoria vieja con una
+topología nueva, el pipeline daría por buenos los `.xml` que encuentra y el resultado sería un híbrido
+silencioso.
+
+Para empaquetar y comparar, sin trayectorias:
+
+```bash
+python3 exportar_resultados.py 10     # exportacion/resumen_10ns.csv + 10ns.tar.gz
+python3 figura_rmsd.py 10             # exportacion/figuras/ (PNG 200 dpi y PDF vectorial)
+```
+
+Ninguno de los dos necesita el entorno activado: solo usan la librería estándar (el de figuras, además,
+matplotlib).
 
 ---
 
@@ -293,8 +356,21 @@ Para hacer `push` hay que autenticarse una vez en cada PC, con `gh auth login` o
 
 ## Velocidad de referencia
 
-Con ~49 000 átomos: ~0.8 ns/día con 2 CPU y ~135 ns/día con una RTX 3060 de portátil (CUDA). Con GPU, 50 ns
-tardan unas 9 h por compuesto, más el análisis. Para medirlo en una PC nueva:
+Medido en noviembre de 2026 sobre este sistema (~49 000 átomos), no estimado:
+
+| Máquina | Producción | 10 ns completos |
+|---|---|---|
+| HPC CEDIA, A100 MIG | **260 ns/día** | ~2 h con análisis y MM/GBSA |
+| HPC CEDIA, trozo MIG pequeño | 125 ns/día | ~3 h 45 |
+| Portátil RTX 3060 a 44 W, 2 trabajos a la vez | **15.8 ns/día** | ~17 h |
+| CPU (2 núcleos) | ~0.8 ns/día | semanas |
+
+> El portátil daba 15.8 ns/día con la GPU limitada a **44 W de los 115 disponibles** (`SW Power Cap` activo,
+> relojes a 1522 de 2100 MHz, perfil del sistema en `balanced`). Se corrige en caliente con
+> `powerprofilesctl set performance`. Y lanzar varios compuestos a la vez **no acelera nada**: con la GPU
+> al 100 % se reparten el tiempo por rodajas.
+
+Para medirlo en una PC nueva:
 
 ```bash
 dmlrun run --pipeline resultados --compuesto macaridine --tiempo prueba \
@@ -319,8 +395,28 @@ scontrol show partition interactive              # límite de tiempo
 En nodos con GPU particionada (MIG) el GRES no es `gpu:1` sino algo como `gpu:2g.10gb`. Se ajusta en
 `config/servidores.yaml`.
 
-**`micromamba: command not found` en el nodo de cómputo.** El nodo no hereda tu `.bashrc`; hay que poner la
-inicialización en `pre_comandos` del perfil.
+**`micromamba: command not found`, o `/micromamba: No such file or directory`.** El binario vive en
+`~/.local/bin` y no siempre está en el `PATH`; además hace falta `MAMBA_ROOT_PREFIX`. En una línea:
+
+```bash
+export MAMBA_ROOT_PREFIX="$HOME/micromamba" PATH="$HOME/.local/bin:$PATH" && eval "$(micromamba shell hook -s bash)" && micromamba activate md-braf
+```
+
+`correr_hpc_cedia.sh` ya lo hace solo. En un trabajo de Slurm va en `pre_comandos` del perfil.
+
+**Los trabajos se quedan en `PENDING` con `QOSMaxJobsPerUserLimit`.** La QOS `normal` de CEDIA permite **un
+solo trabajo corriendo a la vez** (`sacctmgr -p show assoc user=$USER`), así que los compuestos van en serie.
+Y una sesión de escritorio de Open OnDemand **es un trabajo de Slurm**: ocupa ese cupo mientras esté viva.
+Para liberarlo sin perder la terminal, entra por **Clusters → Shell Access** (no consume cola) y cancela la
+sesión de escritorio. Pedir una QOS con más cupo a soporte es la mejora de rendimiento más barata del
+proyecto.
+
+**No tengo SSH al clúster.** No hace falta: OnDemand trae explorador de archivos web en
+`https://hpc.cedia.edu.ec/pun/sys/dashboard/files/fs/<ruta absoluta>`, con previsualización de PNG y botón
+de descarga, y una terminal en **Clusters → Shell Access**.
+
+**La terminal del escritorio VNC parte los comandos de varias líneas al pegarlos.** Usa comandos de una
+sola línea, o guiones del repositorio.
 
 **MM/GBSA.** El número de fotogramas y el intervalo se calculan contando los que realmente hay en los `.dcd`,
 así que funciona igual si la producción quedó a medias.
@@ -339,8 +435,13 @@ simulaciones/
     scripts/                       01 preparar · 02 dinámica · 03 RMSD · 04 análisis
                                    05 MM/GBSA · 06 entrada de ML · benchmark
     <Sistema>/sistema/             sistema AMBER preparado (entrada de la dinámica)
-resultados_50ns/<Sistema>/         corridas de 50 ns: md_50ns, analisis_50ns, resultados_50ns
+resultados/<tiempo>ns<Nombre>_<fecha>/   corridas nuevas (NO versionadas)
+exportacion/                       CSV, paquetes y figuras combinadas (NO versionada)
 trayectorias_50ns/<Sistema>/       DCD de producción y topología seca
+correr_hpc_cedia.sh                lanzador para CEDIA, con comprobaciones previas
+generar_ligandos.py                PDB de los estados de protonación, desde SMILES
+exportar_resultados.py             resumen comparativo en CSV + paquete sin trayectorias
+figura_rmsd.py                     figura de RMSD combinada de todos los compuestos
 paper/
     simulacion.tex                 el reporte
     Img/                           figuras del reporte
@@ -349,10 +450,64 @@ docs/EJECUCION.md                  guía larga de la CLI
 
 ---
 
+## Estado del proyecto y advertencias (nov 2026)
+
+Lo que hay que tener presente antes de interpretar o continuar nada.
+
+**El ranking por MM/GBSA total todavía no es defendible.** Los 10 ns de los cinco compuestos terminaron bien,
+pero el control positivo queda **tercero**:
+
+| Compuesto | Vina | MM/GBSA total | ΔvdW + ΔEEL | ΔEGB | RMSD ligando |
+|---|---|---|---|---|---|
+| Quinine (neutra) | −7.69 | −55.59 | −60.63 | **+10.22** | **6.4 Å** |
+| Pallidine | −8.07 | −42.12 | −56.05 | +18.80 | 5.5 Å |
+| **Dabrafenib** | **−8.82** | −39.01 | **−75.82** | **+43.46** | 3.3 Å |
+| Notholaenic acid | −7.72 | −36.67 | −55.91 | +24.68 | 2.6 Å |
+| Macaridine | −7.38 | −32.54 | −47.08 | +19.14 | 2.8 Å |
+
+Tres cosas se leen ahí:
+
+1. **Por interacción directa (ΔvdW + ΔEEL) dabrafenib gana por 15 kcal/mol.** La física está bien capturada;
+   lo que lo hunde es `EGB`, el término de desolvatación, que es la parte menos fiable del método. Conviene
+   **reportar esa columna junto al total**.
+2. **El primer puesto de la quinina es un artefacto.** Gana solo por pagar la desolvatación más baja, está
+   modelada con la protonación equivocada, y su ligando se fue **6.4 Å del sitio acoplado** antes de empezar
+   la producción: no estaba en el bolsillo de ATP cuando se calculó su energía.
+3. **Pallidine también deriva** (5.5 Å) y sus puentes de hidrógeno caen del 94 % al 18 %.
+
+**Faltan controles.** Ninguno de los cuatro productos naturales tiene actividad publicada frente a quinasas
+(Cioffi *et al.* caracterizan el ácido notoloénico solo como antioxidante). Con un único control positivo se
+puede demostrar que el método funciona técnicamente, pero no que **ordena** bien. Añadir vemurafenib como
+segundo positivo y un inactivo como negativo es el mejor retorno por hora de GPU de la lista pendiente.
+
+**10 ns no equivalen al paper base.** Singh *et al.* corrieron **900 ns**, con un RMSD medio de 3.05 Å en los
+últimos 100 ns y tres conformaciones por agrupamiento. Aquí las pendientes de RMSD son ≤ 0.05 Å/ns, pero eso
+es una meseta **local**: el sistema no ha hecho esas transiciones. Replicar 900 ns × 5 son 17 días de cola
+en el mejor trozo de A100 y 36 en el peor. Más razonable: **100 ns con tres réplicas de semilla distinta**
+(~2 días por réplica), que además mejora al paper base en un aspecto — ellos usaron una sola trayectoria por
+compuesto, y sin réplicas no hay barras de error con las que defender que −55.6 y −42.1 son distintos.
+
+**El orden correcto de trabajo** es: (1) protonaciones, (2) rehacer sus sistemas, (3) 10 ns de validación
+—¿se queda la quinina protonada en el bolsillo?—, y solo entonces (4) decidir corridas largas. Lanzar
+cientos de horas de GPU antes del paso 3 es gastarlas sobre moléculas con la carga equivocada.
+
+**Protocolo frente al paper base.** Coincide en todo salvo la duración: ff19SB, GAFF/Antechamber, TIP3P,
+0.15 M NaCl, calentamiento 0→310 K en 500 ps, paso de 2 fs, Langevin con colisión 1, PME con condiciones
+periódicas, Vina con *exhaustiveness* 100 y MM/GBSA con `MMPBSA.py` despreciando la entropía.
+
+---
+
 ## Notas
 
 - Versiones usadas en el reporte: AmberTools 26, OpenMM 8.6.1 (8.2 en el HPC), AutoDock Vina 1.2.7,
   RDKit 2026.03, ParmEd 4.3.1, PDB2PQR 3.6–3.8 y MDAnalysis 2.10–2.11.
+- **OpenMM 8.6 no sirve en CEDIA**: su driver es CUDA 12.2 y esos builds piden ≥ 12.9; fallan con
+  *unsupported PTX*. Ahí va `environment-cuda12.yml` (OpenMM 8.2). En el portátil, con driver 595 / CUDA
+  13.2, 8.6.1 funciona.
+- Los nombres de carpeta **no llevan espacios** a propósito: las directivas `#SBATCH` se parten por espacios
+  y no admiten comillas, así que `--output=.../10nsNotholaenic acid/...` rompe el envío.
+- `resultados_50ns/` dejó de versionarse en el commit `d1c9729`. Los 154 archivos siguen en el historial y
+  se recuperan con `git checkout d1c9729^ -- resultados_50ns && git reset -q resultados_50ns`.
 - Los `correr_50ns.sh` de cada compuesto quedan como referencia histórica; lo que hacían lo cubre
   `dmlrun run --pipeline resultados`, que además elige el entorno según la PC y no fija el tiempo en el
   nombre de las carpetas.
